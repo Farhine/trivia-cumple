@@ -1,79 +1,321 @@
 <!doctype html>
 <html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Pantalla del juego</title>
+<title>El Arca a la Deriva</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@600;800&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#120d1f;--card:#1e1733;--ink:#f3eefc;--mut:#a99cc7;--acc:#ff4fa3;--ok:#3ddc97;--bad:#ff5c5c;--gold:#ffd35c}
-*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 50% -20%,#3a1f5e,var(--bg) 60%) fixed;color:var(--ink);font:20px/1.4 system-ui,sans-serif;min-height:100vh}
-main{padding:28px 40px 110px}
-.top{display:flex;justify-content:space-between;align-items:center;gap:20px;margin-bottom:20px}
-.stats span{background:var(--card);padding:8px 16px;border-radius:99px;margin-left:8px}
-.phases{display:flex;gap:6px;margin-bottom:24px}.phases div{flex:1;height:8px;border-radius:4px;background:#2f2550}.phases .done{background:var(--acc)}.phases .now{background:var(--gold)}
-h1{font-size:56px;margin:10px 0}h2{font-size:40px;margin:10px 0 24px}.mut{color:var(--mut)}
-.card{background:var(--card);border-radius:20px;padding:24px;margin-bottom:16px}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
-.opts{display:grid;grid-template-columns:1fr 1fr;gap:16px}.opt{background:#2f2550;border-radius:18px;padding:26px;font-size:30px;font-weight:700}
-.opt.right{background:#1c5a42}.opt.dim{opacity:.35}
-.p{display:inline-block;background:#2f2550;padding:4px 10px;border-radius:8px;margin:3px;font-size:17px}.p.x{opacity:.35;text-decoration:line-through}.p.off{border:1px dashed var(--mut)}
-.tmr{font-size:90px;font-weight:900;color:var(--gold);text-align:right}
-.lobby{display:grid;grid-template-columns:400px 1fr;gap:28px;align-items:start}
-.qr img{width:100%;border-radius:16px;background:#fff;padding:10px}
-.tag{display:inline-block;font-size:18px;letter-spacing:.08em;text-transform:uppercase;background:var(--acc);padding:4px 12px;border-radius:8px}
-.ev{font-size:28px;font-weight:700;color:var(--gold)}
-.ctrl{position:fixed;left:0;right:0;bottom:0;display:flex;gap:12px;padding:14px 40px;background:#0c0816ee}
-button{font:inherit;border:0;border-radius:14px;padding:12px 22px;background:#2f2550;color:var(--ink);cursor:pointer}button.pri{background:var(--acc);font-weight:700;flex:1}
-input{font:inherit;background:#2b2245;color:var(--ink);border:0;border-radius:10px;padding:10px;width:100%}
-ol li{margin:4px 0}
-</style></head><body><main id="app"></main>
-<div class="ctrl"><button class="pri" id="next">Siguiente ▶ (espacio)</button><button id="reset">Reiniciar</button></div>
+:root{--ink:#fff8ec;--ink2:#ffe9c7;--dark:#1b1030;--paper:#fff4dc;--paperInk:#3a2412;--wood:#7a4a26;--wood2:#5b3419;--ok:#3ddc97;--bad:#ff5c5c;--gold:#ffd35c;
+--A:#ff5d8f;--B:#3fa9ff;--C:#ffb627;--D:#7ae582}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:#0b1630;color:var(--ink);font-family:Nunito,system-ui,sans-serif}
+.title{font-family:'Lilita One',Nunito,sans-serif;letter-spacing:.02em}
+/* ---------- escena ---------- */
+#scene{position:fixed;inset:0;overflow:hidden}
+#sky{position:absolute;inset:0;transition:background 2.5s ease}
+#sun{position:absolute;width:120px;height:120px;border-radius:50%;right:12%;top:12%;transition:all 2.5s ease;filter:blur(.3px)}
+.cloud{position:absolute;font-size:70px;opacity:.85;animation:drift linear infinite;filter:drop-shadow(0 6px 8px rgba(0,0,0,.15))}
+@keyframes drift{from{transform:translateX(-200px)}to{transform:translateX(calc(100vw + 200px))}}
+#rain{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity 2s;background-image:repeating-linear-gradient(105deg,rgba(255,255,255,.18) 0 2px,transparent 2px 22px);animation:rain .5s linear infinite}
+@keyframes rain{from{background-position:0 0}to{background-position:-40px 120px}}
+#flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none}
+.storm #rain{opacity:1}.storm #flash{animation:flash 7s infinite}
+@keyframes flash{0%,93%,100%{opacity:0}94%{opacity:.7}95%{opacity:0}96%{opacity:.5}}
+.sea{position:absolute;left:-5%;width:110%;height:34vh;bottom:0}
+.sea svg{width:200%;height:100%;animation:wave 9s linear infinite}
+.sea.back{bottom:3vh;opacity:.75}.sea.back svg{animation-duration:14s;animation-direction:reverse}
+@keyframes wave{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+#shipWrap{position:absolute;left:50%;bottom:20vh;width:min(1000px,80vw);transform:translateX(-50%);animation:sway 5s ease-in-out infinite;transform-origin:50% 100%}
+.storm #shipWrap{animation-duration:2.4s}
+@keyframes sway{0%,100%{transform:translateX(-50%) rotate(-1.5deg) translateY(0)}50%{transform:translateX(-50%) rotate(1.5deg) translateY(8px)}}
+#deck{display:flex;flex-wrap:wrap-reverse;justify-content:center;align-items:flex-end;gap:2px 6px;padding:0 9%;min-height:60px;position:relative;z-index:2;margin-bottom:-6px}
+#hull{display:block;width:100%;height:auto}
+#water{position:absolute;left:0;right:0;bottom:2vh;height:15vh;z-index:3}
+.ani{display:flex;flex-direction:column;align-items:center;width:74px;transition:opacity .4s}
+.ani .e{font-size:44px;line-height:1;filter:drop-shadow(0 3px 2px rgba(0,0,0,.35));animation:bob 1.6s ease-in-out infinite}
+.ani .n{font-size:12px;font-weight:800;background:rgba(0,0,0,.45);padding:1px 6px;border-radius:8px;max-width:74px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ani.off{opacity:.45}
+.ani.ans .e{animation:hop .45s ease-out}
+.ani .badge{position:absolute;margin:-8px 0 0 34px;font-size:18px}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+@keyframes hop{0%{transform:translateY(0) scale(1)}40%{transform:translateY(-22px) scale(1.15)}100%{transform:translateY(0) scale(1)}}
+.float{position:absolute;bottom:0}
+.float .e{animation:float 3s ease-in-out infinite}
+.float .e::after{content:'🛟';position:absolute;font-size:34px;left:50%;top:52%;transform:translateX(-50%);z-index:-1;opacity:.9}
+@keyframes float{0%,100%{transform:translateY(0) rotate(-8deg)}50%{transform:translateY(-10px) rotate(8deg)}}
+.splash{animation:splash .9s ease-in}
+@keyframes splash{0%{transform:translateY(-38vh) rotate(0)}70%{transform:translateY(0) rotate(340deg)}85%{transform:translateY(-14px)}100%{transform:translateY(0)}}
+.rise{animation:rise .9s ease-out}
+@keyframes rise{0%{transform:translateY(30vh) scale(.6);opacity:0}100%{transform:none;opacity:1}}
+.drop{position:absolute;font-size:30px;animation:drop .9s ease-out forwards;pointer-events:none;z-index:4}
+@keyframes drop{0%{opacity:1;transform:translateY(0) scale(.5)}100%{opacity:0;transform:translateY(-60px) scale(1.4)}}
+/* ---------- HUD ---------- */
+#hud{position:fixed;left:0;right:0;top:0;padding:14px 26px;display:flex;gap:18px;align-items:center;z-index:10}
+#brand{font-size:26px;text-shadow:0 3px 0 rgba(0,0,0,.35);white-space:nowrap}
+#route{flex:1;position:relative;height:54px}
+#route .line{position:absolute;left:2%;right:2%;top:27px;border-top:3px dashed rgba(255,255,255,.55)}
+#route .isl{position:absolute;top:8px;transform:translateX(-50%);font-size:24px;text-align:center;transition:transform .5s}
+#route .isl small{display:block;font-size:10px;font-weight:800;opacity:.85}
+#route .isl.done{opacity:.55}
+#route .isl.now{transform:translateX(-50%) scale(1.35)}
+#route .boat{position:absolute;top:-6px;font-size:30px;transform:translateX(-50%);transition:left 2s cubic-bezier(.5,0,.3,1);animation:bob 1.4s ease-in-out infinite;filter:drop-shadow(0 2px 2px rgba(0,0,0,.4))}
+.chip{background:rgba(0,0,0,.4);backdrop-filter:blur(4px);padding:8px 14px;border-radius:99px;font-weight:800;white-space:nowrap;font-size:17px}
+#stats{display:flex;gap:8px}
+#goalbar{position:fixed;left:26px;right:26px;top:80px;height:12px;border-radius:6px;background:rgba(0,0,0,.35);z-index:10;overflow:hidden}
+#goalbar div{height:100%;border-radius:6px;transition:width 1s,background 1s}
+#goalbar span{position:absolute;top:0;bottom:0;width:3px;background:#fff}
+/* ---------- panel ---------- */
+#panel{position:fixed;left:50%;top:108px;transform:translateX(-50%);width:min(1100px,92vw);z-index:9}
+.card{background:var(--paper);color:var(--paperInk);border-radius:22px;padding:26px 32px;box-shadow:0 14px 0 rgba(0,0,0,.25),0 30px 60px rgba(0,0,0,.35);border:4px solid #e9cf9d}
+.pop{animation:pop .55s cubic-bezier(.2,1.4,.4,1)}
+@keyframes pop{0%{transform:scale(.6) rotate(-3deg);opacity:0}100%{transform:none;opacity:1}}
+.slide{animation:slide .6s cubic-bezier(.2,1.2,.4,1)}
+@keyframes slide{0%{transform:translateY(-60px);opacity:0}100%{transform:none;opacity:1}}
+.qtop{display:flex;justify-content:space-between;align-items:flex-start;gap:20px}
+.tag{display:inline-block;font-weight:800;font-size:15px;letter-spacing:.06em;text-transform:uppercase;background:var(--paperInk);color:var(--paper);padding:5px 12px;border-radius:8px}
+.stars{color:#e0a100;font-size:20px;margin-left:8px}
+.qtext{font-size:40px;line-height:1.15;margin:14px 0 18px}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.opt{border-radius:16px;padding:18px 20px;font-size:28px;font-weight:800;color:#24140a;display:flex;gap:14px;align-items:center;box-shadow:0 6px 0 rgba(0,0,0,.18);animation:pop .5s cubic-bezier(.2,1.4,.4,1) backwards}
+.opt b{font-family:'Lilita One';background:rgba(255,255,255,.55);border-radius:10px;width:44px;height:44px;display:grid;place-items:center;flex:none}
+.o0{background:var(--A)}.o1{background:var(--B)}.o2{background:var(--C)}.o3{background:var(--D)}
+.opt:nth-child(2){animation-delay:.08s}.opt:nth-child(3){animation-delay:.16s}.opt:nth-child(4){animation-delay:.24s}
+.opt.dim{opacity:.25;filter:grayscale(.7);transition:all .6s}
+.opt.win{transform:scale(1.04);outline:5px solid #fff;box-shadow:0 0 0 10px rgba(61,220,151,.6),0 8px 0 rgba(0,0,0,.2);animation:winp 1s ease-in-out 2}
+@keyframes winp{50%{transform:scale(1.08)}}
+.timer{width:96px;height:96px;flex:none;position:relative}
+.timer svg{transform:rotate(-90deg)}
+.timer circle{fill:none;stroke-width:10}
+.timer .tbg{stroke:#e9cf9d}.timer .tfg{stroke:#ff5d8f;stroke-linecap:round;stroke-dasharray:264;animation:tdown linear forwards}
+@keyframes tdown{from{stroke-dashoffset:0}to{stroke-dashoffset:264}}
+.timer div{position:absolute;inset:0;display:grid;place-items:center;font-family:'Lilita One';font-size:36px}
+.timer.hurry{animation:shake .3s infinite}
+@keyframes shake{25%{transform:rotate(-6deg)}75%{transform:rotate(6deg)}}
+.meta{margin-top:12px;font-weight:800;opacity:.75;font-size:18px}
+.rtitle{font-size:38px;margin:0 0 8px}
+.line{font-size:22px;margin:6px 0;animation:slide .5s backwards}
+.ev{font-size:26px;font-weight:800;color:#b5179e;animation:pop .6s backwards}
+.intro{text-align:center;padding:40px}
+.intro .num{font-size:22px;font-weight:800;letter-spacing:.2em;opacity:.7}
+.intro h1{font-size:76px;margin:6px 0 10px}
+.intro p{font-size:28px;margin:0}
+.lobby{display:grid;grid-template-columns:270px 1fr;gap:24px}
+.lobby img{width:100%;border-radius:14px;background:#fff;padding:8px}
+.code{font-family:'Lilita One';font-size:54px;letter-spacing:.15em;text-align:center}
+.gbox{background:#fbe7c0;border-radius:14px;padding:10px 12px;margin-bottom:10px}
+.gbox .pl{display:inline-flex;align-items:center;gap:4px;background:#fff;border-radius:99px;padding:2px 10px 2px 4px;margin:3px;font-weight:800;font-size:15px;animation:pop .4s}
+.gbox .pl span{font-size:22px}
+textarea{width:100%;font:inherit;border:2px solid #e9cf9d;border-radius:10px;padding:8px;background:#fffaf0;color:var(--paperInk)}
+.btn{font:inherit;font-weight:800;border:0;border-radius:12px;padding:9px 16px;background:var(--paperInk);color:var(--paper);cursor:pointer}
+.end h1{font-size:84px;text-align:center;margin:0}
+.mvp{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-top:16px}
+.mvp div{text-align:center;font-weight:800;font-size:18px}.mvp span{font-size:56px;display:block;animation:bob 1.2s infinite}
+/* ---------- narrador ---------- */
+#narr{position:fixed;left:22px;bottom:22px;display:flex;align-items:flex-end;gap:10px;z-index:12;max-width:min(640px,60vw);pointer-events:none}
+#parrot{font-size:78px;filter:drop-shadow(0 4px 3px rgba(0,0,0,.4));transform-origin:50% 90%}
+#parrot.talk{animation:talk .25s ease-in-out infinite alternate}
+@keyframes talk{from{transform:rotate(-6deg) scale(1)}to{transform:rotate(6deg) scale(1.06)}}
+#bubble{background:#fff;color:#2a1a0a;border-radius:18px 18px 18px 4px;padding:12px 16px;font-size:20px;font-weight:800;box-shadow:0 6px 0 rgba(0,0,0,.2);opacity:0;transform:translateY(10px);transition:all .3s;margin-bottom:46px}
+#bubble.show{opacity:1;transform:none}
+#ctrl{position:fixed;right:22px;bottom:22px;display:flex;gap:10px;z-index:12}
+#ctrl button{font:inherit;font-weight:800;border:0;border-radius:14px;padding:12px 18px;background:rgba(0,0,0,.5);color:#fff;cursor:pointer;backdrop-filter:blur(4px);font-size:16px}
+#ctrl #next{background:#ff5d8f;font-size:18px;box-shadow:0 5px 0 #b8325f}
+.confetti{position:fixed;top:-40px;font-size:30px;z-index:20;animation:fall linear forwards;pointer-events:none}
+@keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
+@media (max-width:900px){.lobby{grid-template-columns:1fr}.qtext{font-size:28px}.opt{font-size:20px}#brand{display:none}}
+</style></head><body>
+<div id="scene">
+  <div id="sky"></div><div id="sun"></div><div id="clouds"></div><div id="rain"></div><div id="flash"></div>
+  <div class="sea back"><svg viewBox="0 0 2400 300" preserveAspectRatio="none"><path fill="#2b6cb0" d="M0 60 Q150 20 300 60 T600 60 T900 60 T1200 60 T1500 60 T1800 60 T2100 60 T2400 60 V300 H0Z"/></svg></div>
+  <div id="shipWrap">
+    <div id="deck"></div>
+    <svg id="hull" viewBox="0 0 1000 170"><path d="M30 20 H970 L890 150 Q500 175 110 150 Z" fill="#7a4a26" stroke="#4a2a12" stroke-width="6"/><path d="M60 50 H940" stroke="#5b3419" stroke-width="6"/><path d="M85 88 H915" stroke="#5b3419" stroke-width="5"/><g fill="#ffe9a8" stroke="#4a2a12" stroke-width="4"><circle cx="250" cy="115" r="14"/><circle cx="420" cy="118" r="14"/><circle cx="580" cy="118" r="14"/><circle cx="750" cy="115" r="14"/></g><text x="500" y="80" text-anchor="middle" font-family="Lilita One,sans-serif" font-size="30" fill="#ffd35c">EL ARCA</text></svg>
+  </div>
+  <div id="water"></div>
+  <div class="sea front"><svg viewBox="0 0 2400 300" preserveAspectRatio="none"><path fill="#1e4e8c" d="M0 90 Q120 50 240 90 T480 90 T720 90 T960 90 T1200 90 T1440 90 T1680 90 T1920 90 T2160 90 T2400 90 V300 H0Z"/><path fill="none" stroke="rgba(255,255,255,.35)" stroke-width="4" d="M0 90 Q120 50 240 90 T480 90 T720 90 T960 90 T1200 90 T1440 90 T1680 90 T1920 90 T2160 90 T2400 90"/></svg></div>
+</div>
+<div id="hud"><div id="brand" class="title">🚢 El Arca a la Deriva</div><div id="route"></div><div id="stats"></div></div>
+<div id="goalbar"><div></div><span></span></div>
+<div id="panel"></div>
+<div id="narr"><div id="parrot">🦜</div><div id="bubble"></div></div>
+<div id="ctrl"><button id="voice">🔊 Narrador</button><button id="reset">Reiniciar</button><button id="next">Siguiente ▶</button></div>
+
 <script src="lib/peerjs.min.js"></script>
 <script src="lib/qrcode.js"></script>
 <script src="peer-config.js"></script>
 <script src="engine.js"></script>
 <script>
-let st=null,deadline=0,QRURL='',NET='Conectando…';const app=document.getElementById('app');
+const $=id=>document.getElementById(id);
+const esc=t=>String(t??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+const ls={get:k=>{try{return localStorage.getItem(k)}catch(e){return null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}}};
+let st=null,deadline=0,QRURL='',NET='Conectando…',panelKey='';
+
+// ---------- sala / red ----------
 let CODE=null;try{CODE=sessionStorage.getItem('sala')}catch(e){}
 if(!CODE){CODE=Array.from({length:4},()=>'ABCDEFGHJKLMNPQRSTUVWXYZ'[Math.floor(Math.random()*24)]).join('');try{sessionStorage.setItem('sala',CODE)}catch(e){}}
-const JOIN=new URL('index.html?sala='+CODE,location.href).href;
+const qs=new URLSearchParams(location.search);
+const JOIN=new URL('index.html?sala='+CODE+(qs.get('peerhost')?'&peerhost='+qs.get('peerhost'):''),location.href).href;
 {const q=qrcode(0,'M');q.addData(JOIN);q.make();QRURL=q.createDataURL(8,2)}
-const s={emit:(t,a)=>{if(t==='next')Game.next();else if(t==='reset')Game.reset();else if(t==='setGroups')Game.setGroups(a);else if(t==='shuffleGroups')Game.shuffleGroups()}};
 const peer=new Peer('tcumple-'+CODE,PEER_OPTS);
-peer.on('open',()=>{NET='';Game.push()});
-peer.on('error',e=>{NET='Error de conexión: '+e.type+(e.type==='unavailable-id'?' (cierra otras pestañas del host)':'');if(st)render()});
-peer.on('disconnected',()=>{NET='Reconectando…';render();setTimeout(()=>peer.reconnect(),1000)});
+peer.on('open',()=>{NET='';panelKey='';Game.push()});
+peer.on('error',e=>{NET='Error de conexión: '+e.type+(e.type==='unavailable-id'?' (cierra otras pestañas del host)':'');panelKey='';if(st)render()});
+peer.on('disconnected',()=>{NET='Reconectando…';setTimeout(()=>peer.reconnect(),1000)});
 peer.on('connection',conn=>{conn.on('data',m=>Game.message(conn,m));conn.on('close',()=>Game.closed(conn));conn.on('error',()=>Game.closed(conn))});
-fetch('questions.json').then(r=>r.json()).then(bank=>Game.init(bank,{host:x=>{st={...x,join:JOIN,qr:QRURL,code:CODE};if(x.q)deadline=Date.now()+x.q.left;render()},send:(c,d)=>{try{if(c.open)c.send(d)}catch(e){}}}));
-window.addEventListener('beforeunload',e=>{if(st&&st.stage!=='lobby'){e.preventDefault();e.returnValue=''}});
-const esc=t=>String(t??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-document.getElementById('next').onclick=()=>s.emit('next');
-document.getElementById('reset').onclick=()=>{if(confirm('¿Reiniciar la partida? Los jugadores se mantienen.'))s.emit('reset')};
-document.addEventListener('keydown',e=>{if(e.code==='Space'&&e.target.tagName!=='INPUT'){e.preventDefault();s.emit('next')}});
-const KIND={solo:'Trivia individual · fallar = eliminado',shield:'🛡️ Escudo colectivo · el equipo necesita 60%',shop:'🛒 Votación de compra con el pozo común',group:'👥 Cuenta la mayoría de tu grupo',split:'⚔️ Elige tu bando',splitQ:'⚔️ Desafío de bandos · cada bando necesita 50%',vote:'🗳️ Votación del equipo',revive:'🔁 Rescate · vivos y eliminados responden'};
-const players=g=>g.players.map(p=>`<span class="p ${p.alive?'':'x'} ${p.on?'':'off'}">${p.immune?'🛡️':''}${esc(p.name)}</span>`).join('');
-function render(){if(!st)return;
-  const lbl={lobby:'Siguiente: comenzar ▶',question:'Cerrar pregunta ▶',end:'Fin'}[st.stage]||'Siguiente ▶';
-  document.getElementById('next').textContent=lbl+' (espacio)';
-  let h=`<div class="top"><div><b>🎂 Trivia de Cumpleaños · un solo equipo</b>${st.phase>=0?` <span class="mut">· Fase ${st.phase+1}/10 · ${esc(st.phaseName)}</span>`:''}</div><div class="stats"><span>👥 ${st.total}</span><span style="color:var(--ok)">● ${st.alive} vivos</span><span style="color:var(--bad)">✖ ${st.total-st.alive}</span>${st.phase>=0?`<span>🎯 meta ${st.goal.need}</span><span>💰 pozo ${st.pool}</span>`:''}${st.mods.double?'<span>x2</span>':''}${st.mods.shield?'<span>🛡️ escudo</span>':''}${st.mods.fifty?'<span>✂️ 50/50</span>':''}${st.mods.hard?'<span>😈 nivel 5</span>':''}</div></div>`;
-  h+=`<div class="phases">${st.phases.map((_,i)=>`<div class="${i<st.phase?'done':i===st.phase?'now':''}"></div>`).join('')}</div>`;
-  if(st.stage==='lobby'){
-    h+=`<div class="lobby"><div class="card qr"><h2 style="font-size:28px">Escanea para jugar</h2><div style="font-size:22px">Código de sala: <b style="font-size:40px;letter-spacing:.15em">${st.code}</b></div>${NET?`<p style="color:var(--gold)">${esc(NET)}</p>`:''}${st.qr?`<img src="${st.qr}">`:''}<p style="font-size:18px;word-break:break-all">${esc(st.join)}</p></div><div>
-    <div class="card"><b>Grupos</b> <span class="mut">(uno por línea)</span><textarea id="gr" rows="4" style="width:100%;font:inherit;background:#2b2245;color:var(--ink);border:0;border-radius:10px;padding:10px;margin-top:8px">${st.groups.map(g=>esc(g.name)).join('\n')}</textarea><button id="sg">Guardar grupos</button> <button id="shf">🔀 Repartir al azar</button></div>
-    <div class="grid">${st.groups.map(g=>`<div class="card"><b>${esc(g.name)}</b> <span class="mut">(${g.players.length})</span><div>${players(g)}</div></div>`).join('')}</div>
-    ${st.noGroup.length?`<div class="card"><b>Sin grupo</b> <span class="mut">(se asignan al comenzar)</span><div>${st.noGroup.map(n=>`<span class="p">${esc(n)}</span>`).join('')}</div></div>`:''}</div></div>`}
-  else if(st.stage==='intro'){h+=`<div class="card" style="text-align:center;padding:60px"><div class="mut">FASE ${st.phase+1}</div><h1>${esc(st.phaseName)}</h1><p style="font-size:30px">${esc(st.desc)}</p></div>`}
-  else if(st.stage==='question'){const q=st.q;
-    h+=`<div style="display:flex;justify-content:space-between;gap:20px"><div><span class="tag">${KIND[q.kind]||''}</span>${q.d?` <span class="mut">Dificultad ${'★'.repeat(q.d)}${'☆'.repeat(5-q.d)}</span>`:''}<h2>${esc(q.text)}</h2></div><div class="tmr" id="tmr"></div></div>
-    <div class="opts">${q.opts.map((o,i)=>`<div class="opt ${(q.hide||[]).includes(i)?'dim':''}">${'ABCD'[i]}. ${esc(o)}</div>`).join('')}</div><p class="mut">Respondieron ${q.answered} de ${q.eligible}</p>`}
-  else if(st.stage==='reveal'){const r=st.result;
-    if(r.opts&&r.correct>=0)h+=`<p class="mut">${esc(r.text)}</p><div class="opts">${r.opts.map((o,i)=>`<div class="opt ${i===r.correct?'right':'dim'}">${'ABCD'[i]}. ${esc(o)}</div>`).join('')}</div>`;
-    h+=`<div class="card" style="margin-top:16px"><h2>${esc(r.title)}</h2>${r.lines.map(l=>`<p>${esc(l)}</p>`).join('')}${r.events.map(l=>`<p class="ev">${esc(l)}</p>`).join('')}</div>`;
-    h+=`<div class="grid">${st.groups.map(g=>`<div class="card"><b>${esc(g.name)}</b><div>${players(g)}</div></div>`).join('')}</div>`}
-  if(st.stage!=='lobby'&&st.stage!=='end')h+=`<div class="card"><b>🎯 Meta del equipo: ${st.goal.have} / ${st.goal.need} vivos al final</b><div style="height:14px;background:#2b2245;border-radius:7px;margin-top:10px"><div style="height:14px;border-radius:7px;width:${Math.min(100,st.goal.have/st.goal.need*100)}%;background:${st.goal.have>=st.goal.need?'var(--ok)':'var(--gold)'}"></div></div></div>`;
-  else if(st.stage==='end'){const win=st.goal.have>=st.goal.need;h+=`<div class="card" style="text-align:center;padding:50px"><h1 style="font-size:80px">${win?'🎉 ¡GANARON TODOS!':'💀 El equipo cayó'}</h1><p style="font-size:34px">Sobrevivieron ${st.goal.have} de ${st.total} · meta ${st.goal.need} · pozo final ${st.pool}</p></div><div class="card"><b>⭐ Quienes más aportaron al equipo</b><ol style="font-size:28px">${st.mvps.map(r=>`<li>${esc(r.name)} — ${r.hits} aciertos</li>`).join('')}</ol></div>`}
-  app.innerHTML=h;
-  const sg=document.getElementById('sg');if(sg)sg.onclick=()=>s.emit('setGroups',document.getElementById('gr').value.split('\n').map(x=>x.trim()).filter(Boolean));
-  const sh=document.getElementById('shf');if(sh)sh.onclick=()=>s.emit('shuffleGroups');
-  tick();
+fetch('questions.json').then(r=>r.json()).then(bank=>Game.init(bank,{host:x=>{const prev=st;st=x;if(x.q)deadline=Date.now()+x.q.left;render(prev)},send:(c,d)=>{try{if(c.open)c.send(d)}catch(e){}}}));
+window.addEventListener('beforeunload',e=>{if(st&&st.stage!=='lobby'&&st.stage!=='end'){e.preventDefault();e.returnValue=''}});
+
+$('next').onclick=()=>Game.next();
+$('reset').onclick=()=>{if(confirm('¿Reiniciar la partida? Los jugadores se mantienen.'))Game.reset()};
+document.addEventListener('keydown',e=>{if(e.code==='Space'&&e.target.tagName!=='TEXTAREA'){e.preventDefault();Game.next()}});
+
+// ---------- ambiente por isla ----------
+const ISLES=['⚓','🛡️','⚖️','⛈️','⚔️','🛟','🐾','🌋','🗼','🏝️'];
+const SKY=[
+ {sky:'linear-gradient(#7ec8ff,#bfe6ff 60%,#ffe9c7)',sun:'#fff3a0',sx:'78%',sy:'14%'},
+ {sky:'linear-gradient(#5fb4ff,#a8dcff 60%,#fff0d0)',sun:'#fff0a0',sx:'70%',sy:'10%'},
+ {sky:'linear-gradient(#4aa3f0,#9fd2f7 60%,#ffe2b8)',sun:'#ffe48a',sx:'60%',sy:'9%'},
+ {sky:'linear-gradient(#2b3a55,#56657f 60%,#7d8aa0)',sun:'#9aa5b5',sx:'55%',sy:'12%',storm:1},
+ {sky:'linear-gradient(#ff9a6b,#ffc28a 55%,#ffe0b0)',sun:'#ffd27a',sx:'40%',sy:'22%'},
+ {sky:'linear-gradient(#ff6e7f,#ffb37a 55%,#ffd9a0)',sun:'#ffb36b',sx:'30%',sy:'32%'},
+ {sky:'linear-gradient(#5b3a8c,#c06c84 55%,#f8b195)',sun:'#ff9e6b',sx:'22%',sy:'42%'},
+ {sky:'linear-gradient(#1c1f4a,#3d2a6b 55%,#8a4f7d)',sun:'#ff6b4a',sx:'15%',sy:'50%',storm:1},
+ {sky:'linear-gradient(#0b1030,#1d2457 60%,#3a3f7a)',sun:'#f4f1d0',sx:'80%',sy:'12%'},
+ {sky:'linear-gradient(#ff9a8b,#ffd1a6 50%,#a8e6ff)',sun:'#fff1a8',sx:'82%',sy:'26%'},
+];
+const LOBBYSKY={sky:'linear-gradient(#7ec8ff,#bfe6ff 60%,#ffe9c7)',sun:'#fff3a0',sx:'78%',sy:'14%'};
+function setSky(i){const s=i>=0?SKY[Math.min(i,9)]:LOBBYSKY;$('sky').style.background=s.sky;const sun=$('sun');sun.style.background=`radial-gradient(circle,${s.sun},${s.sun}00 70%)`;sun.style.left=s.sx;sun.style.top=s.sy;document.body.classList.toggle('storm',!!s.storm)}
+for(let i=0;i<5;i++){const c=document.createElement('div');c.className='cloud';c.textContent='☁️';c.style.top=(4+Math.random()*28)+'vh';c.style.fontSize=(50+Math.random()*60)+'px';c.style.animationDuration=(40+Math.random()*50)+'s';c.style.animationDelay=(-Math.random()*80)+'s';$('clouds').appendChild(c)}
+function drawRoute(phase){
+  const r=$('route');if(!r.dataset.ok){r.innerHTML='<div class="line"></div>'+ISLES.map((e,i)=>`<div class="isl" id="isl${i}" style="left:${4+i*10.2}%">${e}<small>${i+1}</small></div>`).join('')+'<div class="boat" id="boat">⛵</div>';r.dataset.ok=1}
+  ISLES.forEach((_,i)=>{const el=$('isl'+i);el.className='isl'+(i<phase?' done':'')+(i===phase?' now':'')});
+  $('boat').style.left=(phase<0?1:4+Math.min(phase,9)*10.2)+'%';
 }
-function tick(){const t=document.getElementById('tmr');if(t)t.textContent=Math.max(0,Math.ceil((deadline-Date.now())/1000))}
-setInterval(tick,250);
+
+// ---------- tripulación animada ----------
+const AV={};
+function placeCrew(){
+  const deck=$('deck'),water=$('water'),seen=new Set();
+  for(const c of st.crew){
+    seen.add(c.id);let el=AV[c.id];
+    if(!el){el=AV[c.id]=document.createElement('div');el.className='ani';el.innerHTML='<div class="e"></div><div class="n"></div>';el.dataset.alive='';el.style.setProperty('--x',Math.random());}
+    el.querySelector('.e').textContent=c.ani;el.querySelector('.n').textContent=c.name;
+    el.classList.toggle('off',!c.on);
+    let b=el.querySelector('.badge');const badge=c.immune?'🛡️':(c.ans&&st.stage==='question'?'✅':'');
+    if(badge){if(!b){b=document.createElement('span');b.className='badge';el.appendChild(b)}b.textContent=badge}else if(b)b.remove();
+    if(c.ans&&!el.dataset.ans){el.classList.remove('ans');void el.offsetWidth;el.classList.add('ans')}el.dataset.ans=c.ans?'1':'';
+    const want=c.alive?'deck':'water';
+    if(el.dataset.alive!==want){
+      const first=el.dataset.alive==='';el.dataset.alive=want;el.classList.remove('splash','rise');
+      if(want==='deck'){el.classList.remove('float');el.style.left='';deck.appendChild(el);if(!first){void el.offsetWidth;el.classList.add('rise');sparkle(el,'✨')}}
+      else{el.classList.add('float');el.style.left=(16+Math.random()*58)+'%';water.appendChild(el);if(!first){void el.offsetWidth;el.classList.add('splash');setTimeout(()=>sparkle(el,'💦'),620)}}
+    }
+  }
+  for(const id in AV)if(!seen.has(id)){AV[id].remove();delete AV[id]}
+}
+function sparkle(el,ch){const r=el.getBoundingClientRect();for(let i=0;i<3;i++){const d=document.createElement('div');d.className='drop';d.textContent=ch;d.style.left=(r.left+r.width/2-15+(i-1)*24)+'px';d.style.top=(r.top+10)+'px';d.style.position='fixed';d.style.animationDelay=i*.08+'s';document.body.appendChild(d);setTimeout(()=>d.remove(),1300)}}
+function confetti(){for(let i=0;i<80;i++){const d=document.createElement('div');d.className='confetti';d.textContent=rnd(['🎉','🎈','🎊','⭐','🍰','🦜']);d.style.left=Math.random()*100+'vw';d.style.animationDuration=(2.5+Math.random()*3)+'s';d.style.animationDelay=Math.random()*2+'s';document.body.appendChild(d);setTimeout(()=>d.remove(),7000)}}
+
+// ---------- narrador (capitán loro) ----------
+let VOICE_ON=ls.get('voz')!=='0',VOICE=null;
+function pickVoice(){const v=speechSynthesis.getVoices().filter(v=>/^es/i.test(v.lang));VOICE=v.find(x=>/es-(MX|US|419|CL|AR|CO)/i.test(x.lang)&&/google|natural|online/i.test(x.name))||v.find(x=>/es-(MX|US|419|CL|AR|CO)/i.test(x.lang))||v.find(x=>/google|natural|online/i.test(x.name))||v[0]||null}
+if('speechSynthesis' in window){pickVoice();speechSynthesis.onvoiceschanged=pickVoice}
+function updVoiceBtn(){$('voice').textContent=VOICE_ON?'🔊 Narrador':'🔇 Narrador'}updVoiceBtn();
+$('voice').onclick=()=>{VOICE_ON=!VOICE_ON;ls.set('voz',VOICE_ON?'1':'0');updVoiceBtn();if(!VOICE_ON&&'speechSynthesis' in window)speechSynthesis.cancel()};
+let bubbleT=null;
+function say(text,speakText){
+  const b=$('bubble'),p=$('parrot');b.textContent=text;b.classList.add('show');p.classList.add('talk');
+  clearTimeout(bubbleT);const done=()=>{p.classList.remove('talk');bubbleT=setTimeout(()=>b.classList.remove('show'),2500)};
+  if(VOICE_ON&&'speechSynthesis' in window){speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(speakText||text);u.lang=VOICE?VOICE.lang:'es-ES';if(VOICE)u.voice=VOICE;u.rate=1.05;u.pitch=1.25;u.onend=done;u.onerror=done;speechSynthesis.speak(u)}
+  else setTimeout(done,Math.min(6000,1200+text.length*45));
+}
+const L={
+ lobby:['Bienvenidos a bordo del Arca. Yo soy el Capitán Loro, y no, no hay chalecos para todos.','Suban, suban. El barco es seguro. Creo.'],
+ intro:[
+  'Zarpamos. Preguntas fáciles para calentar. Si fallan acá, mejor ni se presenten al resto.',
+  'La Isla del Escudo. Si suficientes aciertan, los protejo a todos. Si no, al agua con dignidad.',
+  'Isla del Dilema. Aquí deciden ustedes, así que si sale mal, no me miren a mí.',
+  'Se viene la tormenta. Agárrense de algo que no sea otro animal.',
+  'Isla de los Bandos. Nada une más que separarse por una opinión irrelevante.',
+  'Bahía del Rescate. Los náufragos también juegan. Sí, incluso los que se cayeron en la primera.',
+  'Isla de las Manadas. Confíen en su grupo. Error clásico, pero adelante.',
+  'Mar de la Presión. Aquí es donde los valientes lloran en silencio.',
+  'El Último Faro. Última oportunidad de pescar a sus compañeros.',
+  'Puerto Final. Nivel máximo. Si llegamos, hay torta. Si no, hay tiburones.'],
+ q:{solo:['A ver quién sabe algo.','Responde rápido, que el mar no espera.','Pregunta fácil. Para mí.','Esta la sabe hasta el rata.','Piensa. Sé que duele.'],
+    shield:['Si el sesenta por ciento acierta, nadie se moja.','Trabajo en equipo, ese mito.'],
+    group:['Ahora cuenta lo que diga tu manada. Elijan bien a quién seguir.','Respuesta grupal. Que el más sabio guíe. Si hay alguno.'],
+    split:['Elijan bando. No hay respuesta correcta, solo consecuencias.'],
+    splitQ:['Cada bando necesita la mitad de aciertos. Sin presión.'],
+    revive:['Náufragos, esta es su oportunidad. Los de arriba, no los dejen colgando.'],
+    vote:['Votación. La democracia: el arte de equivocarse todos juntos.'],
+    shop:['Hora de gastar el pozo. Nada de comprar maní, por favor.']},
+ none:['Nadie al agua. Qué aburrido, yo quería ver chapoteo.','Impecable. Sospechosamente impecable.','Todos a bordo. Me están dejando sin trabajo.'],
+ few:['{n} al agua. Los tiburones les mandan saludos.','Adiós, {name}. Nadie te va a extrañar... bueno, un poco.','{name} decidió darse un chapuzón. Valiente o ignorante.'],
+ many:['Eso fue un naufragio en toda regla.','¡Hombre al agua! Y mujer. Y jirafa. Y básicamente todos.','Perdimos a {n}. Voy a necesitar un barco más chico.'],
+ back:['{name} vuelve a bordo, empapado y con dignidad cero.','Miren quién volvió. Seca tus patas antes de entrar.'],
+ vote:['La democracia ha hablado. Yo no me hago responsable.','Decisión tomada. Espero que sepan lo que hicieron.'],
+ shieldOk:['Escudo activado. Por una vez, trabajaron juntos.'],shieldNo:['Sin escudo. El trabajo en equipo les queda grande.'],
+ shop:['Compra realizada. Gastando como si no hubiera mañana. Que quizás no la haya.'],save:['Ahorraron. Muy responsables. Muy aburridos.'],
+ win:['¡Llegamos a puerto! Contra todo pronóstico, especialmente el mío. ¡Feliz cumpleaños!'],
+ lose:['El arca se hundió. Pero miren el lado bueno: nadie va a recordar esto. Excepto yo.']
+};
+const fill=(s,o)=>s.replace('{n}',o.n).replace('{name}',o.name||'alguien');
+function narrate(prev){
+  if(!prev||prev.stage===st.stage&&st.stage!=='question'&&st.stage!=='reveal')return;
+  const key=st.stage+'|'+st.phase+'|'+(st.q?st.q.id:'')+'|'+(st.result?st.result.title:'');if(narrate.k===key)return;narrate.k=key;
+  if(st.stage==='lobby')return;
+  if(st.stage==='intro')return say(L.intro[st.phase]||'');
+  if(st.stage==='question'){const quip=rnd(L.q[st.q.kind]||L.q.solo);return say(quip,quip+' '+st.q.text)}
+  if(st.stage==='end')return say(st.goal.have>=st.goal.need?L.win[0]:L.lose[0]);
+  if(st.stage==='reveal'){
+    const r=st.result,pm=Object.fromEntries((prev.crew||[]).map(c=>[c.id,c.alive]));
+    const fell=st.crew.filter(c=>pm[c.id]===true&&!c.alive),back=st.crew.filter(c=>pm[c.id]===false&&c.alive);
+    let t;
+    if(r.kind==='vote')t=rnd(L.vote);
+    else if(r.kind==='shop')t=/guarda/.test(r.lines.join(' '))?rnd(L.save):rnd(L.shop);
+    else if(r.kind==='shield')t=st.crew.some(c=>c.immune)?rnd(L.shieldOk):rnd(L.shieldNo);
+    else if(fell.length===0&&back.length===0&&['solo','group','splitQ'].includes(r.kind))t=rnd(L.none);
+    else if(fell.length)t=fill(rnd(fell.length>=Math.max(3,prev.alive/2)?L.many:L.few),{n:fell.length,name:rnd(fell).name});
+    if(back.length)t=(t?t+' ':'')+fill(rnd(L.back),{name:rnd(back).name});
+    if(t)say(t);
+  }
+}
+
+// ---------- render ----------
+const KIND={solo:'Trivia individual',shield:'Escudo colectivo · 60%',shop:'Tienda del barco',group:'Respuesta de manada',split:'Elige tu bando',splitQ:'Desafío de bandos · 50%',vote:'Votación de la tripulación',revive:'Rescate · náufragos incluidos'};
+function render(prev){
+  if(!st)return;
+  setSky(st.stage==='lobby'?-1:st.phase);drawRoute(st.phase);placeCrew();
+  const g=st.goal,pct=Math.min(100,g.have/Math.max(1,st.total)*100),need=g.need/Math.max(1,st.total)*100;
+  $('goalbar').style.display=st.stage==='lobby'?'none':'';
+  $('goalbar').firstElementChild.style.width=pct+'%';$('goalbar').firstElementChild.style.background=g.have>=g.need?'var(--ok)':'var(--gold)';$('goalbar').lastElementChild.style.left=need+'%';
+  $('stats').innerHTML=st.stage==='lobby'?`<span class="chip">👥 ${st.total}</span>`:`<span class="chip">🚢 ${st.alive}/${st.total}</span><span class="chip">🎯 ${g.need}</span><span class="chip">💰 ${st.pool}</span>${st.mods.double?'<span class="chip">x2</span>':''}${st.mods.shield?'<span class="chip">🛡️</span>':''}${st.mods.fifty?'<span class="chip">✂️</span>':''}${st.mods.hard?'<span class="chip">😈</span>':''}`;
+  $('next').textContent={lobby:'Zarpar ▶',question:'Cerrar ▶',end:'Fin'}[st.stage]||'Siguiente ▶';
+  const key=st.stage+'|'+st.phase+'|'+(st.q?st.q.id:'')+'|'+(st.result?JSON.stringify(st.result):'')+'|'+(st.stage==='lobby'?JSON.stringify(st.groups)+JSON.stringify(st.crew.map(c=>[c.name,c.g]))+NET:'');
+  if(key!==panelKey){panelKey=key;$('panel').innerHTML=panel();if(st.stage==='end'&&g.have>=g.need)confetti();bindLobby()}
+  if(st.q){const m=$('meta');if(m)m.textContent=`Respondieron ${st.q.answered} de ${st.q.eligible}`}
+  narrate(prev);
+}
+function panel(){
+  if(st.stage==='lobby')return `<div class="card slide"><div class="lobby"><div><img src="${QRURL}"><div class="code">${esc(CODE)}</div><div style="text-align:center;font-weight:800">Escanea el QR o entra con el código${NET?`<br><span style="color:#c0392b">${esc(NET)}</span>`:''}</div></div>
+   <div><div class="title" style="font-size:34px">¡Suban a bordo!</div><p style="margin:4px 0 12px;font-weight:800;opacity:.75">Todos son una sola tripulación: lleguen a puerto con al menos el 40% a bordo.</p>
+   ${st.groups.map(gr=>`<div class="gbox"><b>${esc(gr.name)}</b> <span style="opacity:.6">(${gr.players.length})</span><div>${gr.players.map(p=>`<span class="pl"><span>${p.ani}</span>${esc(p.name)}</span>`).join('')}</div></div>`).join('')}
+   ${st.noGroup.length?`<div class="gbox"><b>Sin manada</b> <span style="opacity:.6">(se asignan al zarpar)</span><div>${st.crew.filter(c=>c.g==null).map(p=>`<span class="pl"><span>${p.ani}</span>${esc(p.name)}</span>`).join('')}</div></div>`:''}
+   <details><summary style="cursor:pointer;font-weight:800">Editar manadas</summary><textarea id="gr" rows="4">${st.groups.map(x=>esc(x.name)).join('\n')}</textarea><button class="btn" id="sg">Guardar</button> <button class="btn" id="shf">🔀 Repartir al azar</button></details></div></div></div>`;
+  if(st.stage==='intro')return `<div class="card intro pop"><div class="num">ISLA ${st.phase+1} DE 10 · ${ISLES[st.phase]}</div><h1 class="title">${esc(st.phaseName)}</h1><p>${esc(st.desc)}</p><p style="margin-top:14px;font-weight:800;opacity:.6">${st.steps} desafíos en esta isla</p></div>`;
+  if(st.stage==='question'){const q=st.q,secs=Math.max(0,q.left/1000);
+    return `<div class="card slide"><div class="qtop"><div><span class="tag">${KIND[q.kind]||''}</span>${q.d?`<span class="stars">${'★'.repeat(q.d)}${'☆'.repeat(5-q.d)}</span>`:''}<span style="margin-left:10px;font-weight:800;opacity:.6">Desafío ${Math.max(1,st.step)} de ${st.steps}</span><div class="qtext title">${esc(q.text)}</div></div>
+     <div class="timer" id="tmr"><svg width="96" height="96"><circle class="tbg" cx="48" cy="48" r="42"/><circle class="tfg" cx="48" cy="48" r="42" style="animation-duration:${secs}s"/></svg><div id="tnum"></div></div></div>
+     <div class="opts">${q.opts.map((o,i)=>`<div class="opt o${i%4} ${(q.hide||[]).includes(i)?'dim':''}"><b>${'ABCD'[i]}</b>${esc(o)}</div>`).join('')}</div><div class="meta" id="meta"></div></div>`}
+  if(st.stage==='reveal'){const r=st.result;
+    return `<div class="card pop">${r.opts&&r.correct>=0?`<div class="opts" style="margin-bottom:16px">${r.opts.map((o,i)=>`<div class="opt o${i%4} ${i===r.correct?'win':'dim'}"><b>${'ABCD'[i]}</b>${esc(o)}</div>`).join('')}</div>`:''}
+     <div class="rtitle title">${esc(r.title)}</div>${r.lines.map((l,i)=>`<div class="line" style="animation-delay:${.3+i*.25}s">${esc(l)}</div>`).join('')}${r.events.map((l,i)=>`<div class="ev" style="animation-delay:${.6+(r.lines.length+i)*.3}s">${esc(l)}</div>`).join('')}</div>`}
+  if(st.stage==='end'){const win=st.goal.have>=st.goal.need;
+    return `<div class="card end pop"><h1 class="title">${win?'🎉 ¡Llegamos a puerto!':'🌊 El arca se hundió'}</h1><p style="text-align:center;font-size:26px;font-weight:800">${st.goal.have} de ${st.total} a bordo · meta ${st.goal.need} · pozo ${st.pool}</p><div style="text-align:center;font-weight:800;opacity:.7">Quienes más aportaron a la tripulación</div><div class="mvp">${st.mvps.map(m=>`<div><span>${m.ani||'🐾'}</span>${esc(m.name)}<br>${m.hits} ${m.hits===1?"acierto":"aciertos"}</div>`).join('')}</div></div>`}
+  return '';
+}
+function bindLobby(){const sg=$('sg');if(sg)sg.onclick=()=>Game.setGroups($('gr').value.split('\n').map(x=>x.trim()).filter(Boolean));const sh=$('shf');if(sh)sh.onclick=()=>Game.shuffleGroups()}
+function tick(){const t=$('tnum');if(t){const s=Math.max(0,Math.ceil((deadline-Date.now())/1000));t.textContent=s;$('tmr').classList.toggle('hurry',s<=5&&s>0)}}
+setInterval(tick,200);
+setTimeout(()=>say(rnd(L.lobby)),1500);
 </script></body></html>

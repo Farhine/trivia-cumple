@@ -1,4 +1,6 @@
-# 🎂 Trivia de Cumpleaños — 100% cooperativa, 30+ jugadores
+# 🚢 El Arca a la Deriva — trivia cooperativa de cumpleaños, 30+ jugadores
+
+Cada invitado es un animal al azar a bordo del Arca. El barco navega por 10 islas; quien falla cae al agua y puede ser rescatado. Un capitán loro sarcástico narra en voz alta (botón 🔊 Narrador; usa la voz en español del navegador).
 
 Todos los invitados son **un solo equipo**. Los grupos del lobby solo organizan dinámicas y no compiten entre sí. Al final **ganan todos o pierden todos**: la meta es terminar con al menos el **40% del equipo vivo**.
 
@@ -19,26 +21,27 @@ Todos los invitados son **un solo equipo**. Los grupos del lobby solo organizan 
 - Cada jugador elige su grupo desde el celular, o presiona *🔀 Repartir al azar*.
 - Quien llega tarde entra eliminado y puede volver en un rescate.
 
-## Las 10 fases
-| # | Fase | Mecánica | Dificultad |
+## Las 10 islas (34 desafíos)
+| # | Isla | Desafíos | Dificultad |
 |---|------|----------|-----------|
-| 1 | Calentamiento | Trivia individual: si fallas, quedas fuera | ★ |
-| 2 | Escudo Colectivo | Si el 60% del equipo acierta, todos ganan inmunidad | ★★ |
-| 3 | El Dilema | Votación grupal + trivia | ★★ |
-| 4 | Escalada | Trivia individual | ★★★ |
-| 5 | Bandos | Se dividen por opinión; cada bando debe llegar al 50% de aciertos (si ambos llegan: +10 al pozo) | ★★★ |
-| 6 | Rescate | Vivos y eliminados responden; cada 3 vivos que aciertan traen de vuelta a 1 eliminado que acertó | ★★ |
-| 7 | Fuerza de Grupo | Cuenta la respuesta de la mayoría del grupo; si el grupo acierta, todos se salvan | ★★★★ |
-| 8 | Presión | Escudo colectivo + trivia difícil | ★★★★ |
-| 9 | Último Rescate | Dilema + rescate | ★★★ |
-| 10 | La Gran Final | Grupo + 2 individuales | ★★★★★ |
+| 1 | Zarpe | 4 trivias individuales | ★–★★ |
+| 2 | Isla del Escudo | Escudo colectivo (60%) + 2 trivias | ★★ |
+| 3 | Isla del Dilema | Votación + 3 trivias | ★★–★★★ |
+| 4 | La Tormenta | 4 trivias | ★★★ |
+| 5 | Isla de los Bandos | Elegir bando + 2 desafíos de bandos (50%) | ★★★ |
+| 6 | Bahía del Rescate | Rescate + trivia + rescate | ★★–★★★ |
+| 7 | Isla de las Manadas | 3 respuestas de grupo | ★★★★ |
+| 8 | Mar de la Presión | Escudo colectivo + 2 trivias | ★★★★ |
+| 9 | El Último Faro | Votación + rescate + trivia | ★★★–★★★★ |
+| 10 | Puerto Final | Grupo + 3 trivias | ★★★★★ |
 
-## Eventos automáticos (gatillantes)
-- 🚨 **Rescate de emergencia**: si quedan ≤25% vivos, vuelve el 30% de los eliminados (1 vez por fase).
-- 🔥 **Racha perfecta**: si todos los vivos aciertan, vuelven 2 al azar.
-- 👻 **Fantasma afortunado** (15%): vuelve 1 al azar.
-- 💰 **Lluvia de puntos** (15%): +5 al pozo común.
-- ⚡ **Resurrección masiva**: si nadie queda en pie, vuelve el 20%.
+## Eventos automáticos (con probabilidad, máximo un rescate automático por pregunta)
+- 🚨 **Bote de emergencia** (35%, máx. 2 por partida): si quedan ≤25% a bordo, vuelve el 25% de los náufragos.
+- 🔥 **Ronda perfecta** (40%): si todos aciertan, vuelve 1 al azar.
+- 🐬 **Delfín amable** (6%): vuelve 1 al azar.
+- 💰 **Cofre flotante** (10%): +5 al pozo.
+- ⚡ **Rayo milagroso**: si el barco queda vacío, vuelve el 15%.
+- En los rescates, cada 4 a bordo que aciertan lanzan 1 salvavidas.
 
 ## Dilemas grupales (vota todo el equipo vivo, gana la mayoría)
 Portal (pagar puntos para revivir 3) · Doble puntos vs. escudo para todos · Dado del destino · Pacto oscuro (revivir a todos pero la siguiente es nivel 5).
@@ -47,7 +50,7 @@ Portal (pagar puntos para revivir 3) · Doble puntos vs. escudo para todos · Da
 Cada acierto suma al **pozo común**, según la dificultad de la pregunta (x2 si el equipo lo votó). No hay puntaje individual.
 Al final de cada fase, el equipo **vota** en qué gastar el pozo:
 - 🛡️ **Escudo** (10): nadie puede ser eliminado en la próxima pregunta.
-- 🔁 **Revivir a 3** compañeros al azar (12).
+- 🛟 **Rescatar a 2** náufragos al azar (15).
 - ✂️ **50/50 para todos** (6).
 - 💰 Ahorrar.
 

@@ -1,53 +1,953 @@
 {
-  "trivia": [
-    {"d":1,"q":"¿Cuántos días tiene un año bisiesto?","o":["366","365","364","367"],"a":0},
-    {"d":1,"q":"¿Qué color se obtiene al mezclar azul y amarillo?","o":["Verde","Morado","Naranjo","Café"],"a":0},
-    {"d":1,"q":"¿Cuántas patas tiene una araña?","o":["8","6","10","12"],"a":0},
-    {"d":1,"q":"¿Cuál es el planeta más cercano al Sol?","o":["Mercurio","Venus","Marte","Tierra"],"a":0},
-    {"d":1,"q":"¿Qué animales aparecen en el escudo de Chile?","o":["Cóndor y huemul","Puma y cóndor","Huemul y zorro","Águila y llama"],"a":0},
-    {"d":1,"q":"¿Cuántos jugadores tiene un equipo de fútbol en la cancha?","o":["11","10","9","12"],"a":0},
-    {"d":1,"q":"¿Cuál es el idioma oficial de Brasil?","o":["Portugués","Español","Brasileño","Inglés"],"a":0},
-    {"d":1,"q":"¿Cuántos lados tiene un hexágono?","o":["6","5","7","8"],"a":0},
-    {"d":2,"q":"¿En qué año llegó el ser humano a la Luna?","o":["1969","1965","1972","1959"],"a":0},
-    {"d":2,"q":"¿Cuál es el océano más grande del mundo?","o":["Pacífico","Atlántico","Índico","Ártico"],"a":0},
-    {"d":2,"q":"¿Quién escribió 'Cien años de soledad'?","o":["Gabriel García Márquez","Mario Vargas Llosa","Julio Cortázar","Isabel Allende"],"a":0},
-    {"d":2,"q":"¿Qué gas es el más abundante en la atmósfera?","o":["Nitrógeno","Oxígeno","Dióxido de carbono","Argón"],"a":0},
-    {"d":2,"q":"¿Qué chilena ganó el Nobel de Literatura en 1945?","o":["Gabriela Mistral","Isabel Allende","Violeta Parra","Marcela Paz"],"a":0},
-    {"d":2,"q":"¿Cuál es el hueso más largo del cuerpo humano?","o":["Fémur","Tibia","Húmero","Peroné"],"a":0},
-    {"d":2,"q":"¿Cuál es la moneda de Japón?","o":["Yen","Won","Yuan","Rupia"],"a":0},
-    {"d":2,"q":"¿Quién pintó la Mona Lisa?","o":["Leonardo da Vinci","Miguel Ángel","Rafael","Botticelli"],"a":0},
-    {"d":2,"q":"¿Cuál es el símbolo químico del oro?","o":["Au","Ag","Go","Or"],"a":0},
-    {"d":3,"q":"¿Cuál es el río más largo de Sudamérica?","o":["Amazonas","Paraná","Orinoco","Magdalena"],"a":0},
-    {"d":3,"q":"¿Cuál es la capital de Australia?","o":["Canberra","Sídney","Melbourne","Perth"],"a":0},
-    {"d":3,"q":"¿En qué año comenzó la Primera Guerra Mundial?","o":["1914","1918","1939","1905"],"a":0},
-    {"d":3,"q":"¿Cuántos huesos tiene un adulto humano?","o":["206","196","212","180"],"a":0},
-    {"d":3,"q":"¿Cuál es la montaña más alta de América?","o":["Aconcagua","Ojos del Salado","Denali","Chimborazo"],"a":0},
-    {"d":3,"q":"¿Qué elemento tiene el símbolo Fe?","o":["Hierro","Flúor","Fósforo","Fermio"],"a":0},
-    {"d":3,"q":"¿Quién escribió 'Veinte poemas de amor y una canción desesperada'?","o":["Pablo Neruda","Vicente Huidobro","Nicanor Parra","Pablo de Rokha"],"a":0},
-    {"d":3,"q":"¿Cuántos jugadores por equipo hay en cancha en el vóleibol?","o":["6","5","7","4"],"a":0},
-    {"d":3,"q":"¿Qué metal es líquido a temperatura ambiente?","o":["Mercurio","Plomo","Estaño","Galio"],"a":0},
-    {"d":4,"q":"¿Cuál es la capital de Canadá?","o":["Ottawa","Toronto","Vancouver","Montreal"],"a":0},
-    {"d":4,"q":"¿En qué año cayó el Muro de Berlín?","o":["1989","1991","1987","1985"],"a":0},
-    {"d":4,"q":"¿Cuál es la unidad de resistencia eléctrica?","o":["Ohm","Volt","Ampere","Watt"],"a":0},
-    {"d":4,"q":"¿Cuál es el número atómico del carbono?","o":["6","12","8","4"],"a":0},
-    {"d":4,"q":"¿En qué año se fundó Santiago?","o":["1541","1536","1550","1520"],"a":0},
-    {"d":4,"q":"¿Cuál es la capital de Mongolia?","o":["Ulán Bator","Astaná","Taskent","Biskek"],"a":0},
-    {"d":4,"q":"¿Cuál es el órgano más grande del cuerpo humano?","o":["La piel","El hígado","El intestino","Los pulmones"],"a":0},
-    {"d":4,"q":"¿Cuál es el desierto no polar más árido del mundo?","o":["Atacama","Sahara","Gobi","Kalahari"],"a":0},
-    {"d":5,"q":"¿Cuántos corazones tiene un pulpo?","o":["3","1","2","4"],"a":0},
-    {"d":5,"q":"¿Cuál fue el primer elemento producido artificialmente?","o":["Tecnecio","Plutonio","Prometio","Neptunio"],"a":0},
-    {"d":5,"q":"¿Cuál es la capital de Kazajistán?","o":["Astaná","Almaty","Biskek","Dusambé"],"a":0},
-    {"d":5,"q":"¿En qué año fue la batalla de Hastings?","o":["1066","1215","1099","966"],"a":0},
-    {"d":5,"q":"¿Qué número representa MCMXC?","o":["1990","1910","2090","1940"],"a":0},
-    {"d":5,"q":"¿Qué país tiene más husos horarios (contando sus territorios)?","o":["Francia","Rusia","Estados Unidos","China"],"a":0},
-    {"d":5,"q":"¿Cuántos minutos tiene una semana?","o":["10.080","8.640","10.800","9.600"],"a":0},
-    {"d":5,"q":"¿En qué país está la ciudad de Tombuctú?","o":["Malí","Níger","Mauritania","Chad"],"a":0},
-    {"d":5,"q":"¿Cuántas caras tiene un icosaedro?","o":["20","12","24","30"],"a":0}
-  ],
-  "splits": [
-    {"q":"¿Playa o montaña?","o":["🏖️ Playa","⛰️ Montaña"]},
-    {"q":"¿Perro o gato?","o":["🐶 Perro","🐱 Gato"]},
-    {"q":"¿Dulce o salado?","o":["🍰 Dulce","🍟 Salado"]},
-    {"q":"¿Completo o churrasco?","o":["🌭 Completo","🥪 Churrasco"]}
-  ]
+ "trivia": [
+  {
+   "d": 1,
+   "q": "¿Cuántos días tiene un año bisiesto?",
+   "o": [
+    "366",
+    "365",
+    "364",
+    "367"
+   ],
+   "a": 0
+  },
+  {
+   "d": 1,
+   "q": "¿Qué color se obtiene al mezclar azul y amarillo?",
+   "o": [
+    "Verde",
+    "Morado",
+    "Naranjo",
+    "Café"
+   ],
+   "a": 0
+  },
+  {
+   "d": 1,
+   "q": "¿Cuántas patas tiene una araña?",
+   "o": [
+    "8",
+    "6",
+    "10",
+    "12"
+   ],
+   "a": 0
+  },
+  {
+   "d": 1,
+   "q": "¿Cuál es el planeta más cercano al Sol?",
+   "o": [
+    "Mercurio",
+    "Venus",
+    "Marte",
+    "Tierra"
+   ],
+   "a": 0
+  },
+  {
+   "d": 1,
+   "q": "¿Qué animales aparecen en el escudo de Chile?",
+   "o": [
+    "Cóndor y huemul",
+    "Puma y cóndor",
+    "Huemul y zorro",
+    "Águila y llama"
+   ],
+   "a": 0
+  },
+  {
+   "d": 1,
+   "q": "¿Cuántos jugadores tiene un equipo de fútbol en la cancha?",
+   "o": [
+    "11",
+    "10",
+    "9",
+    "12"
+   ],
+   "a": 0
+  },
+  {
+   "d": 1,
+   "q": "¿Cuál es el idioma oficial de Brasil?",
+   "o": [
+    "Portugués",
+    "Español",
+    "Brasileño",
+    "Inglés"
+   ],
+   "a": 0
+  },
+  {
+   "d": 1,
+   "q": "¿Cuántos lados tiene un hexágono?",
+   "o": [
+    "6",
+    "5",
+    "7",
+    "8"
+   ],
+   "a": 0
+  },
+  {
+   "d": 2,
+   "q": "¿En qué año llegó el ser humano a la Luna?",
+   "o": [
+    "1969",
+    "1965",
+    "1972",
+    "1959"
+   ],
+   "a": 0
+  },
+  {
+   "d": 2,
+   "q": "¿Cuál es el océano más grande del mundo?",
+   "o": [
+    "Pacífico",
+    "Atlántico",
+    "Índico",
+    "Ártico"
+   ],
+   "a": 0
+  },
+  {
+   "d": 2,
+   "q": "¿Quién escribió 'Cien años de soledad'?",
+   "o": [
+    "Gabriel García Márquez",
+    "Mario Vargas Llosa",
+    "Julio Cortázar",
+    "Isabel Allende"
+   ],
+   "a": 0
+  },
+  {
+   "d": 2,
+   "q": "¿Qué gas es el más abundante en la atmósfera?",
+   "o": [
+    "Nitrógeno",
+    "Oxígeno",
+    "Dióxido de carbono",
+    "Argón"
+   ],
+   "a": 0
+  },
+  {
+   "d": 2,
+   "q": "¿Qué chilena ganó el Nobel de Literatura en 1945?",
+   "o": [
+    "Gabriela Mistral",
+    "Isabel Allende",
+    "Violeta Parra",
+    "Marcela Paz"
+   ],
+   "a": 0
+  },
+  {
+   "d": 2,
+   "q": "¿Cuál es el hueso más largo del cuerpo humano?",
+   "o": [
+    "Fémur",
+    "Tibia",
+    "Húmero",
+    "Peroné"
+   ],
+   "a": 0
+  },
+  {
+   "d": 2,
+   "q": "¿Cuál es la moneda de Japón?",
+   "o": [
+    "Yen",
+    "Won",
+    "Yuan",
+    "Rupia"
+   ],
+   "a": 0
+  },
+  {
+   "d": 2,
+   "q": "¿Quién pintó la Mona Lisa?",
+   "o": [
+    "Leonardo da Vinci",
+    "Miguel Ángel",
+    "Rafael",
+    "Botticelli"
+   ],
+   "a": 0
+  },
+  {
+   "d": 2,
+   "q": "¿Cuál es el símbolo químico del oro?",
+   "o": [
+    "Au",
+    "Ag",
+    "Go",
+    "Or"
+   ],
+   "a": 0
+  },
+  {
+   "d": 3,
+   "q": "¿Cuál es el río más largo de Sudamérica?",
+   "o": [
+    "Amazonas",
+    "Paraná",
+    "Orinoco",
+    "Magdalena"
+   ],
+   "a": 0
+  },
+  {
+   "d": 3,
+   "q": "¿Cuál es la capital de Australia?",
+   "o": [
+    "Canberra",
+    "Sídney",
+    "Melbourne",
+    "Perth"
+   ],
+   "a": 0
+  },
+  {
+   "d": 3,
+   "q": "¿En qué año comenzó la Primera Guerra Mundial?",
+   "o": [
+    "1914",
+    "1918",
+    "1939",
+    "1905"
+   ],
+   "a": 0
+  },
+  {
+   "d": 3,
+   "q": "¿Cuántos huesos tiene un adulto humano?",
+   "o": [
+    "206",
+    "196",
+    "212",
+    "180"
+   ],
+   "a": 0
+  },
+  {
+   "d": 3,
+   "q": "¿Cuál es la montaña más alta de América?",
+   "o": [
+    "Aconcagua",
+    "Ojos del Salado",
+    "Denali",
+    "Chimborazo"
+   ],
+   "a": 0
+  },
+  {
+   "d": 3,
+   "q": "¿Qué elemento tiene el símbolo Fe?",
+   "o": [
+    "Hierro",
+    "Flúor",
+    "Fósforo",
+    "Fermio"
+   ],
+   "a": 0
+  },
+  {
+   "d": 3,
+   "q": "¿Quién escribió 'Veinte poemas de amor y una canción desesperada'?",
+   "o": [
+    "Pablo Neruda",
+    "Vicente Huidobro",
+    "Nicanor Parra",
+    "Pablo de Rokha"
+   ],
+   "a": 0
+  },
+  {
+   "d": 3,
+   "q": "¿Cuántos jugadores por equipo hay en cancha en el vóleibol?",
+   "o": [
+    "6",
+    "5",
+    "7",
+    "4"
+   ],
+   "a": 0
+  },
+  {
+   "d": 3,
+   "q": "¿Qué metal es líquido a temperatura ambiente?",
+   "o": [
+    "Mercurio",
+    "Plomo",
+    "Estaño",
+    "Galio"
+   ],
+   "a": 0
+  },
+  {
+   "d": 4,
+   "q": "¿Cuál es la capital de Canadá?",
+   "o": [
+    "Ottawa",
+    "Toronto",
+    "Vancouver",
+    "Montreal"
+   ],
+   "a": 0
+  },
+  {
+   "d": 4,
+   "q": "¿En qué año cayó el Muro de Berlín?",
+   "o": [
+    "1989",
+    "1991",
+    "1987",
+    "1985"
+   ],
+   "a": 0
+  },
+  {
+   "d": 4,
+   "q": "¿Cuál es la unidad de resistencia eléctrica?",
+   "o": [
+    "Ohm",
+    "Volt",
+    "Ampere",
+    "Watt"
+   ],
+   "a": 0
+  },
+  {
+   "d": 4,
+   "q": "¿Cuál es el número atómico del carbono?",
+   "o": [
+    "6",
+    "12",
+    "8",
+    "4"
+   ],
+   "a": 0
+  },
+  {
+   "d": 4,
+   "q": "¿En qué año se fundó Santiago?",
+   "o": [
+    "1541",
+    "1536",
+    "1550",
+    "1520"
+   ],
+   "a": 0
+  },
+  {
+   "d": 4,
+   "q": "¿Cuál es la capital de Mongolia?",
+   "o": [
+    "Ulán Bator",
+    "Astaná",
+    "Taskent",
+    "Biskek"
+   ],
+   "a": 0
+  },
+  {
+   "d": 4,
+   "q": "¿Cuál es el órgano más grande del cuerpo humano?",
+   "o": [
+    "La piel",
+    "El hígado",
+    "El intestino",
+    "Los pulmones"
+   ],
+   "a": 0
+  },
+  {
+   "d": 4,
+   "q": "¿Cuál es el desierto no polar más árido del mundo?",
+   "o": [
+    "Atacama",
+    "Sahara",
+    "Gobi",
+    "Kalahari"
+   ],
+   "a": 0
+  },
+  {
+   "d": 5,
+   "q": "¿Cuántos corazones tiene un pulpo?",
+   "o": [
+    "3",
+    "1",
+    "2",
+    "4"
+   ],
+   "a": 0
+  },
+  {
+   "d": 5,
+   "q": "¿Cuál fue el primer elemento producido artificialmente?",
+   "o": [
+    "Tecnecio",
+    "Plutonio",
+    "Prometio",
+    "Neptunio"
+   ],
+   "a": 0
+  },
+  {
+   "d": 5,
+   "q": "¿Cuál es la capital de Kazajistán?",
+   "o": [
+    "Astaná",
+    "Almaty",
+    "Biskek",
+    "Dusambé"
+   ],
+   "a": 0
+  },
+  {
+   "d": 5,
+   "q": "¿En qué año fue la batalla de Hastings?",
+   "o": [
+    "1066",
+    "1215",
+    "1099",
+    "966"
+   ],
+   "a": 0
+  },
+  {
+   "d": 5,
+   "q": "¿Qué número representa MCMXC?",
+   "o": [
+    "1990",
+    "1910",
+    "2090",
+    "1940"
+   ],
+   "a": 0
+  },
+  {
+   "d": 5,
+   "q": "¿Qué país tiene más husos horarios (contando sus territorios)?",
+   "o": [
+    "Francia",
+    "Rusia",
+    "Estados Unidos",
+    "China"
+   ],
+   "a": 0
+  },
+  {
+   "d": 5,
+   "q": "¿Cuántos minutos tiene una semana?",
+   "o": [
+    "10.080",
+    "8.640",
+    "10.800",
+    "9.600"
+   ],
+   "a": 0
+  },
+  {
+   "d": 5,
+   "q": "¿En qué país está la ciudad de Tombuctú?",
+   "o": [
+    "Malí",
+    "Níger",
+    "Mauritania",
+    "Chad"
+   ],
+   "a": 0
+  },
+  {
+   "d": 5,
+   "q": "¿Cuántas caras tiene un icosaedro?",
+   "o": [
+    "20",
+    "12",
+    "24",
+    "30"
+   ],
+   "a": 0
+  },
+  {
+   "d": 1,
+   "q": "¿Cuántos colores tiene el arcoíris?",
+   "o": [
+    "7",
+    "6",
+    "5",
+    "8"
+   ],
+   "a": 0
+  },
+  {
+   "d": 1,
+   "q": "¿Qué animal es conocido como el rey de la selva?",
+   "o": [
+    "León",
+    "Tigre",
+    "Elefante",
+    "Gorila"
+   ],
+   "a": 0
+  },
+  {
+   "d": 1,
+   "q": "¿Cuántos minutos tiene una hora?",
+   "o": [
+    "60",
+    "100",
+    "30",
+    "90"
+   ],
+   "a": 0
+  },
+  {
+   "d": 1,
+   "q": "¿En qué continente está Chile?",
+   "o": [
+    "América",
+    "Europa",
+    "Asia",
+    "Oceanía"
+   ],
+   "a": 0
+  },
+  {
+   "d": 1,
+   "q": "¿Qué fruta es amarilla y curva?",
+   "o": [
+    "Plátano",
+    "Manzana",
+    "Pera",
+    "Uva"
+   ],
+   "a": 0
+  },
+  {
+   "d": 1,
+   "q": "¿Cuántas ruedas tiene un triciclo?",
+   "o": [
+    "3",
+    "2",
+    "4",
+    "1"
+   ],
+   "a": 0
+  },
+  {
+   "d": 2,
+   "q": "¿Cuál es el animal terrestre más rápido?",
+   "o": [
+    "Guepardo",
+    "León",
+    "Caballo",
+    "Antílope"
+   ],
+   "a": 0
+  },
+  {
+   "d": 2,
+   "q": "¿Cuál es la capital de Perú?",
+   "o": [
+    "Lima",
+    "Cusco",
+    "Arequipa",
+    "Quito"
+   ],
+   "a": 0
+  },
+  {
+   "d": 2,
+   "q": "¿Cuántos continentes hay según el modelo más común en Latinoamérica?",
+   "o": [
+    "5",
+    "6",
+    "7",
+    "4"
+   ],
+   "a": 0
+  },
+  {
+   "d": 2,
+   "q": "¿Cuál es el planeta conocido como el planeta rojo?",
+   "o": [
+    "Marte",
+    "Júpiter",
+    "Venus",
+    "Saturno"
+   ],
+   "a": 0
+  },
+  {
+   "d": 2,
+   "q": "¿Qué instrumento tiene 88 teclas?",
+   "o": [
+    "Piano",
+    "Acordeón",
+    "Órgano de iglesia",
+    "Xilófono"
+   ],
+   "a": 0
+  },
+  {
+   "d": 2,
+   "q": "¿Cuál es el mamífero más grande del mundo?",
+   "o": [
+    "Ballena azul",
+    "Elefante africano",
+    "Cachalote",
+    "Tiburón ballena"
+   ],
+   "a": 0
+  },
+  {
+   "d": 2,
+   "q": "¿En qué país están las pirámides de Giza?",
+   "o": [
+    "Egipto",
+    "México",
+    "Perú",
+    "Sudán"
+   ],
+   "a": 0
+  },
+  {
+   "d": 2,
+   "q": "¿Cuál es la capital de Argentina?",
+   "o": [
+    "Buenos Aires",
+    "Córdoba",
+    "Rosario",
+    "Montevideo"
+   ],
+   "a": 0
+  },
+  {
+   "d": 3,
+   "q": "¿Cuántas cuerdas tiene una guitarra española estándar?",
+   "o": [
+    "6",
+    "5",
+    "7",
+    "4"
+   ],
+   "a": 0
+  },
+  {
+   "d": 3,
+   "q": "¿Cuál es el país más grande del mundo por superficie?",
+   "o": [
+    "Rusia",
+    "Canadá",
+    "China",
+    "Estados Unidos"
+   ],
+   "a": 0
+  },
+  {
+   "d": 3,
+   "q": "¿Qué científico propuso la teoría de la relatividad?",
+   "o": [
+    "Albert Einstein",
+    "Isaac Newton",
+    "Niels Bohr",
+    "Galileo Galilei"
+   ],
+   "a": 0
+  },
+  {
+   "d": 3,
+   "q": "¿Cuál es la capital de Nueva Zelanda?",
+   "o": [
+    "Wellington",
+    "Auckland",
+    "Christchurch",
+    "Queenstown"
+   ],
+   "a": 0
+  },
+  {
+   "d": 3,
+   "q": "¿Cuántos años tiene un siglo?",
+   "o": [
+    "100",
+    "1000",
+    "50",
+    "10"
+   ],
+   "a": 0
+  },
+  {
+   "d": 3,
+   "q": "¿Qué isla chilena es famosa por sus moáis?",
+   "o": [
+    "Isla de Pascua",
+    "Chiloé",
+    "Juan Fernández",
+    "Isla Navarino"
+   ],
+   "a": 0
+  },
+  {
+   "d": 3,
+   "q": "¿Cuál es el planeta más grande del sistema solar?",
+   "o": [
+    "Júpiter",
+    "Saturno",
+    "Neptuno",
+    "Urano"
+   ],
+   "a": 0
+  },
+  {
+   "d": 3,
+   "q": "¿En qué año terminó la Segunda Guerra Mundial?",
+   "o": [
+    "1945",
+    "1944",
+    "1939",
+    "1950"
+   ],
+   "a": 0
+  },
+  {
+   "d": 3,
+   "q": "¿Cuál es el idioma más hablado del mundo como lengua materna?",
+   "o": [
+    "Chino mandarín",
+    "Inglés",
+    "Español",
+    "Hindi"
+   ],
+   "a": 0
+  },
+  {
+   "d": 3,
+   "q": "¿Qué animal es el más grande que ha existido sobre la Tierra?",
+   "o": [
+    "Ballena azul",
+    "Argentinosaurio",
+    "Mamut",
+    "Megalodón"
+   ],
+   "a": 0
+  },
+  {
+   "d": 3,
+   "q": "¿Cuál es el punto de ebullición del agua a nivel del mar en °C?",
+   "o": [
+    "100",
+    "90",
+    "120",
+    "80"
+   ],
+   "a": 0
+  },
+  {
+   "d": 4,
+   "q": "¿Cuál es la capital de Turquía?",
+   "o": [
+    "Ankara",
+    "Estambul",
+    "Esmirna",
+    "Antalya"
+   ],
+   "a": 0
+  },
+  {
+   "d": 4,
+   "q": "¿Cuántos elementos tiene la tabla periódica actualmente?",
+   "o": [
+    "118",
+    "112",
+    "120",
+    "108"
+   ],
+   "a": 0
+  },
+  {
+   "d": 4,
+   "q": "¿Qué planeta tiene el día más largo del sistema solar?",
+   "o": [
+    "Venus",
+    "Mercurio",
+    "Marte",
+    "Neptuno"
+   ],
+   "a": 0
+  },
+  {
+   "d": 4,
+   "q": "¿Cuál es el lago navegable más alto del mundo?",
+   "o": [
+    "Titicaca",
+    "General Carrera",
+    "Victoria",
+    "Baikal"
+   ],
+   "a": 0
+  },
+  {
+   "d": 4,
+   "q": "¿En qué año llegó Cristóbal Colón a América?",
+   "o": [
+    "1492",
+    "1498",
+    "1500",
+    "1488"
+   ],
+   "a": 0
+  },
+  {
+   "d": 4,
+   "q": "¿Cuál es el país con más islas del mundo?",
+   "o": [
+    "Suecia",
+    "Indonesia",
+    "Filipinas",
+    "Noruega"
+   ],
+   "a": 0
+  },
+  {
+   "d": 4,
+   "q": "¿Qué hueso protege el cerebro?",
+   "o": [
+    "El cráneo",
+    "La mandíbula",
+    "El esternón",
+    "La clavícula"
+   ],
+   "a": 0
+  },
+  {
+   "d": 4,
+   "q": "¿Cuál es la velocidad aproximada de la luz?",
+   "o": [
+    "300.000 km/s",
+    "150.000 km/s",
+    "30.000 km/s",
+    "1.000.000 km/s"
+   ],
+   "a": 0
+  },
+  {
+   "d": 4,
+   "q": "¿Quién compuso 'Las cuatro estaciones'?",
+   "o": [
+    "Antonio Vivaldi",
+    "Johann Sebastian Bach",
+    "Wolfgang Amadeus Mozart",
+    "Ludwig van Beethoven"
+   ],
+   "a": 0
+  },
+  {
+   "d": 5,
+   "q": "¿Cuál es el único mamífero capaz de volar?",
+   "o": [
+    "El murciélago",
+    "La ardilla voladora",
+    "El colugo",
+    "El petauro"
+   ],
+   "a": 0
+  },
+  {
+   "d": 5,
+   "q": "¿Cuál es la capital de Bután?",
+   "o": [
+    "Timbu",
+    "Katmandú",
+    "Daca",
+    "Lhasa"
+   ],
+   "a": 0
+  },
+  {
+   "d": 5,
+   "q": "¿En qué año se firmó la Declaración de Independencia de Chile?",
+   "o": [
+    "1818",
+    "1810",
+    "1823",
+    "1814"
+   ],
+   "a": 0
+  },
+  {
+   "d": 5,
+   "q": "¿Qué elemento químico tiene el símbolo W?",
+   "o": [
+    "Wolframio",
+    "Vanadio",
+    "Osmio",
+    "Wolfanio"
+   ],
+   "a": 0
+  }
+ ],
+ "splits": [
+  {
+   "q": "¿Playa o montaña?",
+   "o": [
+    "🏖️ Playa",
+    "⛰️ Montaña"
+   ]
+  },
+  {
+   "q": "¿Perro o gato?",
+   "o": [
+    "🐶 Perro",
+    "🐱 Gato"
+   ]
+  },
+  {
+   "q": "¿Dulce o salado?",
+   "o": [
+    "🍰 Dulce",
+    "🍟 Salado"
+   ]
+  },
+  {
+   "q": "¿Completo o churrasco?",
+   "o": [
+    "🌭 Completo",
+    "🥪 Churrasco"
+   ]
+  },
+  {
+   "q": "¿Verano o invierno?",
+   "o": [
+    "☀️ Verano",
+    "❄️ Invierno"
+   ]
+  },
+  {
+   "q": "¿Café o té?",
+   "o": [
+    "☕ Café",
+    "🍵 Té"
+   ]
+  },
+  {
+   "q": "¿Mañana o noche?",
+   "o": [
+    "🌅 Mañana",
+    "🌙 Noche"
+   ]
+  },
+  {
+   "q": "¿Pizza o sushi?",
+   "o": [
+    "🍕 Pizza",
+    "🍣 Sushi"
+   ]
+  }
+ ]
 }

@@ -7,26 +7,28 @@ const GOAL = 0.4;       // meta colectiva: terminar con al menos el 40% del equi
 // pasos: solo (individual, fallar = eliminado), shield (escudo colectivo si el equipo llega al 60%),
 // group (cuenta la mayoría de tu grupo), split (bandos), vote (dilema), revive (rescate), shop (votación de compra)
 const PHASES = [
-  { name: 'Calentamiento', desc: 'Respondes solo, pero cada acierto suma al pozo común. Si fallas, quedas fuera.', steps: [['solo', 1], ['solo', 1]] },
-  { name: 'Escudo Colectivo', desc: 'Si al menos el 60% del equipo acierta, TODOS ganan inmunidad para la siguiente.', steps: [['shield', 2], ['solo', 2]] },
-  { name: 'El Dilema', desc: 'El equipo vota. Gana la mayoría.', steps: [['vote'], ['solo', 2]] },
-  { name: 'Escalada', desc: 'Sube la dificultad. Ayúdense entre todos.', steps: [['solo', 3], ['solo', 3]] },
-  { name: 'Bandos', desc: 'Se dividen en dos bandos. Cada bando debe llegar al 50% de aciertos: si un bando no llega, caen quienes fallaron. Si ambos llegan, hay premio.', steps: [['split', 3]] },
-  { name: 'Rescate', desc: 'Vivos y eliminados responden. Cada 3 vivos que aciertan traen de vuelta a un eliminado que acertó.', steps: [['revive', 2]] },
-  { name: 'Fuerza de Grupo', desc: 'Cuenta la respuesta de la mayoría de tu grupo. Si tu grupo acierta, se salvan todos sus integrantes.', steps: [['group', 4], ['group', 4]] },
-  { name: 'Presión', desc: 'Escudo colectivo y luego una pregunta difícil.', steps: [['shield', 4], ['solo', 4]] },
-  { name: 'Último Rescate', desc: 'Un dilema y la última oportunidad de volver.', steps: [['vote'], ['revive', 3]] },
-  { name: 'La Gran Final', desc: 'Nivel máximo. Lleguen juntos a la meta.', steps: [['group', 5], ['solo', 5], ['solo', 5]] },
+  { name: 'Zarpe', desc: 'Calentamos motores. Respondes solo; si fallas, caes al agua.', steps: [['solo', 1], ['solo', 1], ['solo', 1], ['solo', 2]] },
+  { name: 'Isla del Escudo', desc: 'Si el 60% del barco acierta, todos quedan protegidos para la próxima caída.', steps: [['shield', 2], ['solo', 2], ['solo', 2]] },
+  { name: 'Isla del Dilema', desc: 'La tripulación vota y la mayoría decide. Luego, a responder.', steps: [['vote'], ['solo', 2], ['solo', 2], ['solo', 3]] },
+  { name: 'La Tormenta', desc: 'Sube la dificultad y el oleaje. Agárrense.', steps: [['solo', 3], ['solo', 3], ['solo', 3], ['solo', 3]] },
+  { name: 'Isla de los Bandos', desc: 'El barco se divide en dos. Cada bando debe acertar al menos el 50% o pierde a quienes fallaron.', steps: [['split', 3], ['splitQ', 3], ['splitQ', 3]] },
+  { name: 'Bahía del Rescate', desc: 'Los náufragos también responden. Cada 4 a bordo que aciertan lanzan un salvavidas.', steps: [['revive', 2], ['solo', 3], ['revive', 3]] },
+  { name: 'Isla de las Manadas', desc: 'Cuenta la respuesta de la mayoría de tu grupo. Si el grupo acierta, todos se salvan.', steps: [['group', 4], ['group', 4], ['group', 4]] },
+  { name: 'Mar de la Presión', desc: 'Escudo colectivo y luego preguntas difíciles.', steps: [['shield', 4], ['solo', 4], ['solo', 4]] },
+  { name: 'El Último Faro', desc: 'Un dilema y la última oportunidad de rescatar náufragos.', steps: [['vote'], ['revive', 3], ['solo', 4]] },
+  { name: 'Puerto Final', desc: 'Nivel máximo. Lleguen a puerto con al menos el 40% de la tripulación.', steps: [['group', 5], ['solo', 5], ['solo', 5], ['solo', 5]] },
 ];
 
 // Compras con el pozo común, decididas por votación
 const SHOP = [
-  { n: '🛡️ Escudo para todos en la próxima pregunta', c: 10, fx: () => { G.mods.shield = true; return 'Próxima pregunta: nadie puede ser eliminado'; } },
-  { n: '🔁 Revivir a 3 compañeros al azar', c: 12, fx: () => revive(shuffle(dead()).slice(0, 3), 'Vuelven') || 'No había nadie que revivir' },
+  { n: '🛡️ Escudo para todo el barco en la próxima pregunta', c: 10, fx: () => { G.mods.shield = true; return 'Próxima pregunta: nadie puede ser eliminado'; } },
+  { n: '🛟 Rescatar a 2 náufragos al azar', c: 15, fx: () => revive(shuffle(dead()).slice(0, 2), 'Vuelven a bordo') || 'No había nadie en el agua' },
   { n: '✂️ 50/50 para todos en la próxima pregunta', c: 6, fx: () => { G.mods.fifty = true; return 'Próxima pregunta: se eliminan 2 opciones incorrectas'; } },
 ];
 
 const P = {};
+const ANIMALS = ['🐀','🐱','🐶','🐘','🦓','🦒','🐵','🐼','🐸','🦊','🐷','🐮','🦁','🐯','🐨','🐧','🦉','🐢','🦔','🦘','🦛','🦏','🐊','🦩','🐙','🦥','🦦','🦨','🦇','🐰','🐻','🐔','🦆','🐴','🦙','🐐','🦬','🐫','🦭','🦜','🐹','🦝','🐗','🐳'];
+const pickAnimal = () => { const used = new Set(list().map(p => p.ani)); const free = ANIMALS.filter(a => !used.has(a)); return rnd(free.length ? free : ANIMALS); };
 let BANK = null;
 let G = null, QID = 0;
 const list = () => Object.values(P), alive = () => list().filter(p => p.alive), dead = () => list().filter(p => !p.alive);
@@ -37,7 +39,7 @@ const award = (n, d) => { G.pool += n * d * (G.mods.double ? 2 : 1); };
 
 function reset() {
   clearTimeout(G && G.timer);
-  G = { stage: 'lobby', phase: -1, queue: [], cur: null, answers: {}, lastAnswers: {}, deadline: 0, result: null, mods: {}, pool: 0, used: new Set(), usedSplit: new Set(), usedDil: new Set(), emergency: false, sides: null, groups: (G && G.groups) || ['🔴 Rojo', '🔵 Azul', '🟢 Verde', '🟡 Amarillo'] };
+  G = { stage: 'lobby', phase: -1, queue: [], cur: null, answers: {}, lastAnswers: {}, deadline: 0, result: null, mods: {}, pool: 0, used: new Set(), emergCount: 0, usedSplit: new Set(), usedDil: new Set(), emergency: false, sides: null, groups: (G && G.groups) || ['🔴 Rojo', '🔵 Azul', '🟢 Verde', '🟡 Amarillo'] };
   for (const p of list()) Object.assign(p, { alive: true, immune: false, hide: [], side: null, hits: 0 });
 }
 
@@ -60,14 +62,14 @@ function kill(p, lines) {
 }
 
 const DILEMMAS = [
-  { q: '🌀 Se abrió un portal al más allá. ¿Qué hace el equipo?', o: ['Gastar 8 pts del pozo → vuelven 3 al azar', 'Ignorarlo y guardar el pozo'],
-    fx: [() => { G.pool = Math.max(0, G.pool - 8); return revive(shuffle(dead()).slice(0, 3), '🔁 Portal: vuelven') || 'No había nadie que revivir'; }, () => 'El pozo queda intacto'] },
+  { q: '🌀 Se abrió un portal al más allá. ¿Qué hace el equipo?', o: ['Gastar 10 pts del pozo → vuelven 2 al azar', 'Ignorarlo y guardar el pozo'],
+    fx: [() => { G.pool = Math.max(0, G.pool - 10); return revive(shuffle(dead()).slice(0, 2), '🔁 Portal: vuelven') || 'No había nadie que revivir'; }, () => 'El pozo queda intacto'] },
   { q: '⚖️ La próxima pregunta...', o: ['Vale DOBLE para el pozo', 'Tiene ESCUDO: nadie puede ser eliminado'],
     fx: [() => { G.mods.double = true; return 'Próxima pregunta: puntos x2'; }, () => { G.mods.shield = true; return 'Próxima pregunta: escudo para todos'; }] },
-  { q: '🎲 El dado del destino', o: ['+10 puntos al pozo común', 'Revivir a 2 compañeros al azar'],
-    fx: [() => { G.pool += 10; return '+10 al pozo'; }, () => revive(shuffle(dead()).slice(0, 2), '🔁 El dado: vuelven') || 'No había nadie que revivir'] },
-  { q: '😈 Pacto oscuro', o: ['Revivir a TODOS, pero la próxima pregunta es nivel 5', 'Rechazar el pacto'],
-    fx: [() => { const r = revive(dead(), '🔁 Pacto: vuelven'); G.mods.hard = true; return (r ? r + ' · ' : '') + '¡Próxima pregunta en nivel máximo!'; }, () => 'Pacto rechazado'] },
+  { q: '🎲 El dado del destino', o: ['+10 puntos al pozo común', 'Lanzar un salvavidas: 50% de revivir a 2'],
+    fx: [() => { G.pool += 10; return '+10 al pozo'; }, () => Math.random() < 0.5 ? (revive(shuffle(dead()).slice(0, 2), '🎲 El dado: vuelven') || 'No había nadie en el agua') : '🎲 El dado salió mal: el salvavidas se hundió'] },
+  { q: '😈 Pacto oscuro', o: ['Revivir a la mitad de los náufragos, pero la próxima pregunta es nivel 5', 'Rechazar el pacto'],
+    fx: [() => { const d = dead(); const r = revive(shuffle(d).slice(0, Math.ceil(d.length / 2)), '😈 Pacto: vuelven'); G.mods.hard = true; return (r ? r + ' · ' : '') + '¡Próxima pregunta en nivel máximo!'; }, () => 'Pacto rechazado'] },
 ];
 
 // ---------- Flujo ----------
@@ -98,7 +100,7 @@ function runStep() {
     if (!dead().length) return show('Rescate', '¡Nadie ha caído! +10 al pozo común.', () => { G.pool += 10; });
     return open(k, pickQ(d), 'all');
   }
-  if (k === 'split') { const sp = BANK.splits[pickFrom(BANK.splits, G.usedSplit)]; G.queue.unshift(['splitQ', d]); return open('split', { text: sp.q, opts: sp.o, correct: -1 }, 'alive'); }
+  if (k === 'split') { const sp = BANK.splits[pickFrom(BANK.splits, G.usedSplit)]; return open('split', { text: sp.q, opts: sp.o, correct: -1 }, 'alive'); }
   if (k === 'vote') { const i = pickFrom(DILEMMAS, G.usedDil); return open('vote', { text: DILEMMAS[i].q, opts: DILEMMAS[i].o, correct: -1 }, 'alive', { dil: i }); }
   if (k === 'shop') {
     const items = SHOP.map((it, i) => ({ ...it, i })).filter(it => G.pool >= it.c);
@@ -138,10 +140,10 @@ function resolve() {
     if (c.kind === 'solo') {
       const bad = al.filter(p => !ok(p)); bad.forEach(p => kill(p, lines));
       const out = bad.filter(p => !p.alive);
-      title = `${good.length} acertaron · ${out.length} eliminados`;
-      if (G.mods.shield && bad.length) lines.push('🛡️ El escudo del equipo salvó a todos');
-      if (out.length) lines.push('💀 Fuera: ' + names(out));
-      if (!bad.length && dead().length) events.push(revive(shuffle(dead()).slice(0, 2), '🔥 ¡Racha perfecta! Vuelven'));
+      title = `${good.length} acertaron · ${out.length} al agua`;
+      if (G.mods.shield && bad.length) lines.push('🛡️ El escudo del barco salvó a todos');
+      if (out.length) lines.push('🌊 Al agua: ' + names(out));
+      if (!bad.length && good.length && dead().length && Math.random() < 0.4) events.push(revive([rnd(dead())], '🔥 ¡Ronda perfecta! Como premio vuelve'));
     } else {
       const r = al.length ? good.length / al.length : 0;
       title = `🛡️ Escudo colectivo: ${Math.round(r * 100)}% de aciertos`;
@@ -159,7 +161,7 @@ function resolve() {
         award(mem.filter(ok).length, 1);
         const bad = mem.filter(p => !ok(p)); bad.forEach(p => kill(p, lines));
         const out = bad.filter(p => !p.alive);
-        lines.push(`❌ ${g}: el grupo falló` + (out.length ? ` — fuera: ${names(out)}` : ''));
+        lines.push(`❌ ${g}: el grupo falló` + (out.length ? ` — al agua: ${names(out)}` : ''));
       }
     });
   } else if (c.kind === 'split') {
@@ -173,16 +175,16 @@ function resolve() {
       const m = alive().filter(p => p.side === s), g = m.filter(ok); award(g.length, c.d);
       const r = m.length ? g.length / m.length : 1;
       if (r >= 0.5) lines.push(`✅ ${G.sides[s]}: ${Math.round(r * 100)}% — bando a salvo`);
-      else { both = false; const bad = m.filter(p => !ok(p)); bad.forEach(p => kill(p, lines)); const out = bad.filter(p => !p.alive); lines.push(`❌ ${G.sides[s]}: ${Math.round(r * 100)}%` + (out.length ? ` — fuera: ${names(out)}` : '')); }
+      else { both = false; const bad = m.filter(p => !ok(p)); bad.forEach(p => kill(p, lines)); const out = bad.filter(p => !p.alive); lines.push(`❌ ${G.sides[s]}: ${Math.round(r * 100)}%` + (out.length ? ` — al agua: ${names(out)}` : '')); }
     });
     if (both) { G.pool += 10; events.push('🤝 ¡Ambos bandos lo lograron! +10 al pozo'); }
   } else if (c.kind === 'revive') {
     const okA = alive().filter(ok); award(okA.length, c.d);
     const okD = shuffle(dead().filter(ok));
-    const n = okA.length ? Math.max(1, Math.ceil(okA.length / 3)) : 0, back = okD.slice(0, n);
+    const n = Math.floor(okA.length / 4) || (okA.length && Math.random() < 0.5 ? 1 : 0), back = okD.slice(0, n);
     back.forEach(p => p.alive = true);
     title = '🔁 Rescate';
-    lines.push(`${okA.length} vivos acertaron → ${n} cupos`, `${okD.length} eliminados acertaron`, back.length ? 'Vuelven: ' + names(back) : 'Nadie vuelve esta vez');
+    lines.push(`${okA.length} a bordo acertaron → ${n} salvavidas`, `${okD.length} eliminados acertaron`, back.length ? 'Vuelven: ' + names(back) : 'Nadie vuelve esta vez');
   } else if (c.kind === 'vote') {
     const { w, cnt } = majority(c, alive());
     title = '🗳️ El equipo decidió';
@@ -196,14 +198,16 @@ function resolve() {
     else lines.push(`El pozo se guarda: ${G.pool} pts`);
   }
 
-  // Gatillantes de eventos
-  if (lethal && dead().length) {
-    if (!G.emergency && alive().length <= Math.max(1, Math.floor(total * 0.25))) {
-      G.emergency = true; events.push(revive(shuffle(dead()).slice(0, Math.ceil(dead().length * 0.3)), '🚨 Rescate de emergencia (quedan muy pocos): vuelven'));
-    } else if (Math.random() < 0.15) events.push(revive([rnd(dead())], '👻 Fantasma afortunado: vuelve'));
+  // Gatillantes de eventos (con probabilidad; como mucho un rescate automático por pregunta)
+  let autoBack = events.length > 0;
+  if (lethal && dead().length && !autoBack) {
+    const low = alive().length <= Math.max(1, Math.floor(total * 0.25));
+    if (low && G.emergCount < 2 && Math.random() < 0.35) {
+      G.emergCount++; autoBack = true; events.push(revive(shuffle(dead()).slice(0, Math.max(1, Math.floor(dead().length * 0.25))), '🚨 Bote de emergencia: vuelven'));
+    } else if (Math.random() < 0.06) { autoBack = true; events.push(revive([rnd(dead())], '🐬 Un delfín amable devolvió a')); }
   }
-  if (lethal && Math.random() < 0.15) { G.pool += 5; events.push('💰 Lluvia de puntos: +5 al pozo'); }
-  if (total && !alive().length) events.push(revive(shuffle(dead()).slice(0, Math.max(1, Math.ceil(total * 0.2))), '⚡ ¡Nadie quedó en pie! Resurrección masiva:'));
+  if (lethal && Math.random() < 0.10) { G.pool += 5; events.push('💰 Un cofre flotante: +5 al pozo'); }
+  if (total && !alive().length) events.push(revive(shuffle(dead()).slice(0, Math.max(1, Math.ceil(total * 0.15))), '⚡ ¡Barco vacío! Un rayo milagroso trae de vuelta a'));
 
   if (!['vote', 'split', 'shop'].includes(c.kind)) { const f = G.mods.fifty; G.mods = {}; if (f) G.mods.fifty = true; }
   G.lastAnswers = A;
@@ -213,8 +217,8 @@ function resolve() {
 
 // ---------- Vistas ----------
 const goal = () => { const t = G.total0 || list().length; return { need: Math.max(1, Math.ceil(t * GOAL)), have: alive().length }; };
-const mvps = () => [...list()].sort((a, b) => b.hits - a.hits).slice(0, 5).map(p => ({ name: p.name, hits: p.hits }));
-const phaseInfo = () => ({ stage: G.stage, phase: G.phase, phaseName: G.phase >= 0 ? PHASES[G.phase].name : '', desc: G.phase >= 0 ? PHASES[G.phase].desc : '', mods: G.mods, pool: G.pool, goal: goal() });
+const mvps = () => [...list()].sort((a, b) => b.hits - a.hits).slice(0, 5).map(p => ({ name: p.name, ani: p.ani, hits: p.hits }));
+const phaseInfo = () => ({ stage: G.stage, phase: G.phase, step: G.phase >= 0 ? PHASES[G.phase].steps.length - G.queue.filter(s => s[0] !== 'shop').length : 0, steps: G.phase >= 0 ? PHASES[G.phase].steps.length : 0, phaseName: G.phase >= 0 ? PHASES[G.phase].name : '', desc: G.phase >= 0 ? PHASES[G.phase].desc : '', mods: G.mods, pool: G.pool, goal: goal() });
 
 function hview() {
   const c = G.cur; let q = null;
@@ -225,14 +229,15 @@ function hview() {
   }
   return {
     ...phaseInfo(), phases: PHASES.map(p => p.name),  total: list().length, alive: alive().length,
-    groups: G.groups.map((g, i) => ({ name: g, players: list().filter(p => p.group === i).map(p => ({ name: p.name, alive: p.alive, on: !!p.conn, immune: p.immune })) })),
+    groups: G.groups.map((g, i) => ({ name: g, players: list().filter(p => p.group === i).map(p => ({ name: p.name, ani: p.ani, alive: p.alive, on: !!p.conn, immune: p.immune })) })),
     noGroup: list().filter(p => p.group == null).map(p => p.name),
+    crew: list().map(p => ({ id: p.token, name: p.name, ani: p.ani, alive: p.alive, immune: p.immune, on: !!p.conn, g: p.group, ans: G.stage === 'question' && !!G.answers[p.token] })),
     q, result: G.stage === 'reveal' ? G.result : null, mvps: G.stage === 'end' ? mvps() : [],
   };
 }
 function pview(p) {
   const c = G.cur;
-  const s = { ...phaseInfo(), me: { name: p.name, group: G.groups[p.group] || null, gi: p.group, alive: p.alive, immune: p.immune }, groups: G.groups.map((g, i) => ({ name: g, n: list().filter(x => x.group === i).length })) };
+  const s = { ...phaseInfo(), me: { name: p.name, ani: p.ani, group: G.groups[p.group] || null, gi: p.group, alive: p.alive, immune: p.immune }, groups: G.groups.map((g, i) => ({ name: g, n: list().filter(x => x.group === i).length })) };
   if (G.stage === 'question' && c) s.q = { kind: c.kind, text: c.text, opts: c.opts, left: G.deadline - Date.now(), can: c.who === 'all' || p.alive, mine: G.answers[p.token] ? G.answers[p.token].i : null, hide: p.hide || [], side: c.kind === 'splitQ' && G.sides ? G.sides[p.side] : null };
   if (G.stage === 'reveal' && G.result) { const a = G.lastAnswers[p.token]; s.result = { ...G.result, mine: a ? a.i : null }; }
   if (G.stage === 'end') s.mvps = mvps();
@@ -259,7 +264,7 @@ const Game = {
         if (!name) return HOOKS.send(conn, { err: 'need_name' });
         if (list().some(x => x.name.toLowerCase() === name.toLowerCase())) return HOOKS.send(conn, { err: 'Ese nombre ya está en uso' });
         const token = Math.random().toString(36).slice(2, 10);
-        p = P[token] = { token, name, group: null, alive: G.stage === 'lobby', immune: false, hide: [], hits: 0 };
+        p = P[token] = { token, name, ani: pickAnimal(), group: null, alive: G.stage === 'lobby', immune: false, hide: [], hits: 0 };
       }
       if (p.conn && p.conn !== conn) try { p.conn.close(); } catch (e) {}
       p.conn = conn; conn._t = p.token; HOOKS.send(conn, { token: p.token }); return push();

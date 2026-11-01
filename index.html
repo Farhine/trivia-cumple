@@ -1,21 +1,37 @@
 <!doctype html>
 <html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
 <title>Jugar</title>
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@600;800&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#120d1f;--card:#1e1733;--ink:#f3eefc;--mut:#a99cc7;--acc:#ff4fa3;--ok:#3ddc97;--bad:#ff5c5c;--gold:#ffd35c}
-*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 50% -20%,#3a1f5e,var(--bg) 60%) fixed;color:var(--ink);font:16px/1.4 system-ui,sans-serif;min-height:100vh}
-main{max-width:480px;margin:0 auto;padding:16px}
-.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px;font-size:14px}
-.chip{background:var(--card);padding:5px 10px;border-radius:99px}.dead{color:var(--bad)}.alive{color:var(--ok)}
-h1{font-size:24px;margin:8px 0}h2{font-size:20px;margin:6px 0 14px}.mut{color:var(--mut)}
-.card{background:var(--card);border-radius:16px;padding:16px;margin-bottom:12px}
+:root{--card:#fff4dc;--ink:#3a2412;--mut:#8a6a4a;--acc:#ff5d8f;--ok:#1f9e6a;--bad:#d64545;--gold:#e0a100}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;color:var(--ink);font:16px/1.4 Nunito,system-ui,sans-serif;background:linear-gradient(#7ec8ff,#bfe6ff 55%,#2b6cb0 55.2%,#1e4e8c) fixed}
+body.dead{background:linear-gradient(#1e4e8c,#123364) fixed}
+main{max-width:480px;margin:0 auto;padding:14px 14px 30px}
+h1,h2,.title{font-family:'Lilita One',Nunito,sans-serif;font-weight:400}
+.bar{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:10px;font-size:14px;font-weight:800}
+.chip{background:rgba(255,255,255,.85);padding:5px 10px;border-radius:99px}.dead .chip{background:rgba(255,255,255,.75)}
+.me{display:flex;align-items:center;gap:12px;background:var(--card);border-radius:18px;padding:10px 14px;margin-bottom:10px;box-shadow:0 5px 0 rgba(0,0,0,.15)}
+.me .big{font-size:52px;line-height:1;animation:bob 1.6s ease-in-out infinite}
+.dead .me .big{animation:float 3s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-5px)}}@keyframes float{0%,100%{transform:rotate(-10deg)}50%{transform:rotate(10deg) translateY(-6px)}}
+h1{font-size:28px;margin:6px 0}h2{font-size:22px;margin:4px 0 12px}.mut{color:var(--mut)}
+.card{background:var(--card);border-radius:18px;padding:16px;margin-bottom:12px;box-shadow:0 5px 0 rgba(0,0,0,.15)}
+.anim{animation:pop .45s cubic-bezier(.2,1.4,.4,1)}@keyframes pop{0%{transform:scale(.85);opacity:0}100%{transform:none;opacity:1}}
 button,input{font:inherit;width:100%;border:0;border-radius:14px;padding:16px;margin:6px 0;color:var(--ink)}
-input{background:#2b2245}button{background:#2f2550;font-weight:600;text-align:left}
-button.pri{background:var(--acc);text-align:center}button.sel{outline:3px solid var(--acc)}
-button:disabled{opacity:.45}button.gone{opacity:.15;text-decoration:line-through}
-.right{background:#1c5a42!important}.wrong{background:#6a2430!important}
-.tmr{font-size:40px;font-weight:800;text-align:center;color:var(--gold)}
-.tag{display:inline-block;font-size:12px;letter-spacing:.08em;text-transform:uppercase;background:var(--acc);padding:3px 8px;border-radius:6px}
+input{background:#fff;border:2px solid #e9cf9d}
+button{background:#fff;font-weight:800;text-align:left;box-shadow:0 5px 0 rgba(0,0,0,.18);transition:transform .1s}
+button:active{transform:translateY(3px);box-shadow:0 2px 0 rgba(0,0,0,.18)}
+button[data-a]{font-size:19px;display:flex;align-items:center;gap:12px;min-height:66px}
+button[data-a]::before{font-family:'Lilita One';background:rgba(255,255,255,.6);border-radius:10px;width:38px;height:38px;display:grid;place-items:center;flex:none}
+button[data-a="0"]{background:#ff5d8f}button[data-a="0"]::before{content:'A'}
+button[data-a="1"]{background:#3fa9ff}button[data-a="1"]::before{content:'B'}
+button[data-a="2"]{background:#ffb627}button[data-a="2"]::before{content:'C'}
+button[data-a="3"]{background:#7ae582}button[data-a="3"]::before{content:'D'}
+button.pri{background:var(--acc);color:#fff;text-align:center}button.sel{outline:4px solid #fff;transform:scale(1.02)}
+button:disabled{opacity:.5}button.sel:disabled{opacity:1}button.gone{opacity:.12;text-decoration:line-through}
+.tmr{font-family:'Lilita One';font-size:44px;text-align:center;color:var(--acc)}
+.tag{display:inline-block;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;background:var(--ink);color:var(--card);padding:3px 8px;border-radius:6px}
 ol{padding-left:22px}
 </style></head><body><main id="app"><div class="card">Conectando…</div></main>
 <script src="lib/peerjs.min.js"></script>
@@ -44,16 +60,16 @@ const esc=t=>String(t??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&g
 function join(name){pendingName=name;if(conn&&conn.open)conn.send({type:'join',token,name});else connect()}
 const KIND={solo:'Trivia individual',shield:'🛡️ Escudo colectivo',shop:'🛒 Votación de compra',group:'👥 Respuesta grupal',split:'⚔️ Elige tu bando',splitQ:'⚔️ Desafío de bandos',vote:'🗳️ Votación del equipo',revive:'🔁 Rescate'};
 function render(){
-  if(!st){app.innerHTML=`<h1>🎂 ¡Bienvenido!</h1><div class="card"><p>Escribe tu nombre para entrar al juego.</p>${sala?`<p class="mut">Sala: <b>${esc(sala)}</b></p>`:`<input id="sl" maxlength="4" placeholder="Código de sala" style="text-transform:uppercase">`}<input id="nm" maxlength="20" placeholder="Tu nombre"><button class="pri" id="go">Entrar</button>${status?`<p style="color:var(--gold)">${esc(status)}</p>`:''}</div>`;
+  if(!st){app.innerHTML=`<h1 style="color:#fff;text-shadow:0 3px 0 rgba(0,0,0,.3)">🚢 El Arca a la Deriva</h1><div class="card"><p>Escribe tu nombre y te tocará un animal al azar.</p>${sala?`<p class="mut">Sala: <b>${esc(sala)}</b></p>`:`<input id="sl" maxlength="4" placeholder="Código de sala" style="text-transform:uppercase">`}<input id="nm" maxlength="20" placeholder="Tu nombre"><button class="pri" id="go">Entrar</button>${status?`<p style="color:var(--gold)">${esc(status)}</p>`:''}</div>`;
     document.getElementById('go').onclick=()=>{const sl=document.getElementById('sl');if(sl){sala=sl.value.trim().toUpperCase();token=ls.get('tok_'+sala)}if(!sala)return alert('Escribe el código de sala');status='Conectando…';join(document.getElementById('nm').value);render()};return}
-  const m=st.me;let h=`<div class="bar"><span class="chip"><b>${esc(m.name)}</b></span><span class="chip ${m.alive?'alive':'dead'}">${m.alive?'● Vivo':'✖ Eliminado'}</span>${m.group?`<span class="chip">${esc(m.group)}</span>`:''}${m.immune?'<span class="chip">🛡️</span>':''}</div>`;
+  const m=st.me;document.body.classList.toggle('dead',!m.alive&&st.stage!=='lobby');let h=`<div class="me"><span class="big">${m.ani||'🐾'}</span><div><div class="title" style="font-size:24px">${esc(m.name)}</div><div style="font-weight:800;color:${m.alive?'var(--ok)':'var(--bad)'}">${m.alive?'⛵ A bordo':'🛟 En el agua'}</div></div></div><div class="bar"><span class="chip ${m.alive?'alive':'dead'}" style="display:none"></span>${m.group?`<span class="chip">${esc(m.group)}</span>`:''}${m.immune?'<span class="chip">🛡️</span>':''}</div>`;
   if(st.stage!=='lobby')h+=`<div class="card" style="padding:12px 16px"><div style="display:flex;justify-content:space-between"><span>🎯 Meta del equipo: ${st.goal.have}/${st.goal.need} vivos</span><span>💰 Pozo: ${st.pool}</span></div><div style="height:8px;background:#2b2245;border-radius:4px;margin-top:8px"><div style="height:8px;border-radius:4px;width:${Math.min(100,st.goal.have/st.goal.need*100)}%;background:${st.goal.have>=st.goal.need?'var(--ok)':'var(--gold)'}"></div></div></div>`;
   if(st.phase>=0&&st.stage!=='end')h+=`<div class="mut">Fase ${st.phase+1}/10 · ${esc(st.phaseName)}</div>`;
-  if(st.stage==='lobby'){h+=`<h2>Elige tu grupo</h2>`+st.groups.map((g,i)=>`<button data-g="${i}" class="${m.gi===i?'sel':''}">${esc(g.name)} <span class="mut">(${g.n})</span></button>`).join('')+`<p class="mut">Si no eliges, te asignamos uno. Espera a que el anfitrión comience.</p>`}
+  if(st.stage==='lobby'){h+=`<h2>Elige tu manada</h2>`+st.groups.map((g,i)=>`<button data-g="${i}" class="${m.gi===i?'sel':''}">${esc(g.name)} <span class="mut">(${g.n})</span></button>`).join('')+`<p class="mut">Si no eliges, te asignamos uno. Espera a que el anfitrión comience.</p>`}
   else if(st.stage==='intro'){h+=`<div class="card"><h1>${esc(st.phaseName)}</h1><p>${esc(st.desc)}</p></div><p class="mut">Mira la pantalla grande…</p>`}
   else if(st.stage==='question'){const q=st.q;
     h+=`<div class="card"><span class="tag">${KIND[q.kind]||''}</span>${q.side?` <span class="chip">Tu bando: ${esc(q.side)}</span>`:''}<h2>${esc(q.text)}</h2><div class="tmr" id="tmr"></div></div>`;
-    if(!q.can)h+=`<div class="card mut">Estás eliminado. Espera un evento de rescate para volver 👻</div>`;
+    if(!q.can)h+=`<div class="card mut">Estás en el agua 🛟. Espera un rescate para volver a bordo.</div>`;
     else{if(q.kind==='revive'&&!m.alive)h+=`<p>¡Acierta para tener chance de volver!</p>`;
       h+=q.opts.map((o,i)=>`<button data-a="${i}" class="${q.mine===i?'sel':''} ${q.hide.includes(i)?'gone':''}" ${q.mine!=null||q.hide.includes(i)?'disabled':''}>${esc(o)}</button>`).join('');
       if(q.mine!=null)h+=`<p class="mut">Respuesta enviada ✔</p>`}}
@@ -61,8 +77,9 @@ function render(){
     if(r.correct>=0&&r.opts){you=r.mine==null?'<p class="mut">No respondiste</p>':(r.mine===r.correct?'<h1 style="color:var(--ok)">✅ ¡Correcto!</h1>':'<h1 style="color:var(--bad)">❌ Incorrecto</h1>');you+=`<p>Respuesta: <b>${esc(r.opts[r.correct])}</b></p>`}
     h+=`<div class="card">${you}<h2>${esc(r.title)}</h2>${r.lines.map(l=>`<p>${esc(l)}</p>`).join('')}${r.events.map(l=>`<p><b>${esc(l)}</b></p>`).join('')}</div>`}
   else if(st.stage==='end'){const win=st.goal.have>=st.goal.need;
-    h+=`<div class="card" style="text-align:center"><h1>${win?'🎉 ¡GANARON TODOS!':'💀 El equipo no lo logró'}</h1><p>Sobrevivieron ${st.goal.have} (meta: ${st.goal.need})</p><p>Pozo final: ${st.pool} pts</p></div><div class="card"><b>⭐ Más aciertos aportados al equipo</b><ol>${st.mvps.map(r=>`<li>${esc(r.name)} — ${r.hits}</li>`).join('')}</ol></div>`}
+    h+=`<div class="card" style="text-align:center"><h1>${win?'🎉 ¡Llegamos a puerto!':'🌊 El arca se hundió'}</h1><p>Sobrevivieron ${st.goal.have} (meta: ${st.goal.need})</p><p>Pozo final: ${st.pool} pts</p></div><div class="card"><b>⭐ Más aciertos aportados al equipo</b><ol>${st.mvps.map(r=>`<li>${esc(r.name)} — ${r.hits}</li>`).join('')}</ol></div>`}
   if(status)h=`<p style="color:var(--gold)">${esc(status)}</p>`+h;
+  const ak=st.stage+(st.q?st.q.text:'')+(st.result?st.result.title:'');if(ak!==window._ak){window._ak=ak;h='<div class="anim">'+h+'</div>'}
   app.innerHTML=h;
   app.querySelectorAll('[data-g]').forEach(b=>b.onclick=()=>s.emit('group',+b.dataset.g));
   app.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>s.emit('answer',+b.dataset.a));
