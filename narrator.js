@@ -46,14 +46,14 @@ const LINES = {
   },
   go: ['¡Ya!', '¡Tiempo corriendo!', '¡Ahora!', '¡Adelante!', '¡Vamos!'],
   none: ['Nadie al agua. Qué aburrido, yo quería ver chapoteo.', 'Impecable. Sospechosamente impecable.', 'Todos a bordo. Me están dejando sin trabajo.', 'Ni uno al agua. ¿Están haciendo trampa? No me importa, me gusta.', 'Perfecto. Hasta me emocioné un poquito.', 'Nadie cayó. Los tiburones están decepcionados.'],
-  few: ['{n} al agua. Los tiburones les mandan saludos.', 'Adiós, {name}. Nadie te va a extrañar... bueno, un poco.', '{name} decidió darse un chapuzón. Valiente o ignorante.', 'Al agua {name}. Por lo menos el agua está tibia. Mentira.', '{name}, el {ani} más mojado del océano.', 'Perdimos a {name}. Que en paz nade.', '{name} cayó. Alguien tírele una galleta.', 'Chao {name}. Te guardo un pedazo de torta. Mojado.'],
+  few: ['Uno menos a bordo. Los tiburones mandan saludos.', 'Al agua. Por lo menos el agua está tibia. Mentira.', 'Chao, náufrago. Te guardo un pedazo de torta. Mojado.', 'Alguien se dio un chapuzón. Valiente o ignorante.', '{n} al agua. Los tiburones les mandan saludos.', 'Adiós, {name}. Nadie te va a extrañar... bueno, un poco.', '{name} decidió darse un chapuzón. Valiente o ignorante.', 'Al agua {name}. Por lo menos el agua está tibia. Mentira.', '{name}, el {ani} más mojado del océano.', 'Perdimos a {name}. Que en paz nade.', '{name} cayó. Alguien tírele una galleta.', 'Chao {name}. Te guardo un pedazo de torta. Mojado.'],
   many: ['Eso fue un naufragio en toda regla.', '¡Hombre al agua! Y mujer. Y jirafa. Y básicamente todos.', 'Perdimos a {n}. Voy a necesitar un barco más chico.', '{n} al agua de una sola vez. Récord personal de la tripulación.', 'Eso no fue una pregunta, fue una masacre acuática.', 'Se cayeron {n}. El barco ahora flota mejor, eso sí.'],
-  back: ['{name} vuelve a bordo, empapado y con dignidad cero.', 'Miren quién volvió. Seca tus patas antes de entrar, {name}.', '{name} regresa del más allá. Huele a pescado, pero regresa.', 'Bienvenido de vuelta, {name}. No te acostumbres.', '{name} está de vuelta. Los tiburones lloran.'],
+  back: ['Un náufrago vuelve a bordo, empapado y con dignidad cero.', 'Miren quién volvió del más allá. Huele a pescado, pero volvió.', 'Bienvenido de vuelta. No te acostumbres.', '{name} vuelve a bordo, empapado y con dignidad cero.', 'Miren quién volvió. Seca tus patas antes de entrar, {name}.', '{name} regresa del más allá. Huele a pescado, pero regresa.', 'Bienvenido de vuelta, {name}. No te acostumbres.', '{name} está de vuelta. Los tiburones lloran.'],
   noMajority: ['Sin mayoría no hay compra. La democracia, otra vez, decepcionando.', 'Cada uno votó por lo suyo. Felicitaciones, no compraron nada.', 'Ni para ponerse de acuerdo sirven. El pozo se queda donde está.'],
   guilty: ['Culpable. A la plancha, sin derecho a pataleo.', 'La tripulación ha hablado: al agua con el criminal.', 'Culpable. Que los tiburones decidan si apelar.'],
   innocent: ['Inocente. Aunque yo sigo sospechando.', 'Absuelto. Pero te estaré vigilando.', 'Inocente. La justicia es ciega, y a veces también sorda.'],
   councilOk: ['El Consejo acertó. Pensar juntos funciona, ¿quién lo diría?', 'Debate exitoso. Por una vez, la mayoría tenía razón.'],
-  miniFall: ['Y el peor de a bordo, {name}, se va al agua por flojo.', 'Por cierto, {name}, último lugar. Al agua.', '{name} jugó tan mal que el barco lo expulsó solo.'],
+  miniFall: ['Y el peor de a bordo se va al agua por flojo.', 'Último lugar a bordo. Al agua, sin pataleo.', 'Y el peor de a bordo, {name}, se va al agua por flojo.', 'Por cierto, {name}, último lugar. Al agua.', '{name} jugó tan mal que el barco lo expulsó solo.'],
   vote: ['La democracia ha hablado. Yo no me hago responsable.', 'Decisión tomada. Espero que sepan lo que hicieron.', 'Votaron. Ahora vivan con las consecuencias.', 'Interesante elección. Equivocada, pero interesante.'],
   shieldOk: ['Escudo activado. Por una vez, trabajaron juntos.', 'Lo lograron. Están protegidos. Disfrútenlo, dura poco.', 'Escudo arriba. Estoy casi orgulloso.'],
   shieldNo: ['Sin escudo. El trabajo en equipo les queda grande.', 'No llegaron. El escudo se fue a la basura, como sus respuestas.', 'Sin protección. Que el mar tenga piedad.'],
@@ -64,6 +64,13 @@ const LINES = {
   sunk: ['No queda nadie a bordo. El barco se hunde. Fue un honor. Mentira, fue un desastre.'],
   win: ['¡Llegamos a puerto! Contra todo pronóstico, especialmente el mío. ¡Feliz cumpleaños!', '¡Puerto a la vista! Lo lograron. Hay torta para todos. Bueno, para los vivos.', '¡Victoria! Nunca dudé de ustedes. Bueno, dudé todo el rato.'],
   lose: ['El barco se hundió. Pero miren el lado bueno: nadie va a recordar esto. Excepto yo.', 'No llegamos. El puerto queda para otro cumpleaños.', 'Naufragio total. Igual hay torta. Mojada, pero hay.'],
+  trialGen: ['¡Juicio a bordo! Tenemos un acusado. Que se defienda en voz alta, y la tripulación vote culpable o inocente.', 'Orden en la sala. Hay un sospechoso entre nosotros. Acusado, defiéndete. Tripulación, a votar.'],
+  drawGen: ['¡Galería del naufragio! Los náufragos dibujan en su celular, y la tripulación vota. El autor ganador vuelve a bordo. Hoy dibujan esto:', 'Hora del arte, náufragos. Saquen el lápiz digital. El tema es:'],
+  modeBest: ['Gana el mejor dibujo. Sin presión, artistas.'],
+  modeWorst: ['Ojo: esta vez gana el PEOR dibujo. Hagan su mejor esfuerzo por hacerlo mal.'],
+  repeat: ['Repito.'],
+  voteBest: ['¡A votar! Los de a bordo eligen en su celular el mejor dibujo.'],
+  voteWorst: ['¡A votar! Los de a bordo eligen en su celular el peor dibujo. Sean crueles.'],
   idle: ['¿Siguen ahí? El barco no avanza solo.', 'Capitán esperando órdenes. Y galletas.', 'Cuando quieran, eh. El océano tiene todo el día. Yo no.'],
 };
 const _recent = [];
@@ -75,3 +82,13 @@ function line(key, vars = {}) {
   _recent.push(s); if (_recent.length > 40) _recent.shift();
   return s.replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? '');
 }
+
+// ---------- audios pregrabados ----------
+function audioKey(t) {
+  const s = String(t).normalize('NFC').replace(/\s+/g, ' ').trim();
+  let h1 = 0x811c9dc5, h2 = 0x01000193 ^ s.length;
+  for (let i = 0; i < s.length; i++) { const c = s.charCodeAt(i); h1 = Math.imul(h1 ^ c, 16777619) >>> 0; h2 = Math.imul(h2 + c, 2246822519) >>> 0; h2 = (h2 << 13 | h2 >>> 19) >>> 0; }
+  return h1.toString(16).padStart(8, '0') + h2.toString(16).padStart(8, '0');
+}
+// Todas las frases fijas (sin {variables}) que se pueden pregrabar
+function fixedLines() { const out = new Set(); const walk = o => { if (typeof o === 'string') { if (!/\{\w+\}/.test(o)) out.add(o); } else if (o && typeof o === 'object') Object.values(o).forEach(walk); }; walk(LINES); return [...out]; }

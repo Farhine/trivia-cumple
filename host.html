@@ -184,6 +184,8 @@ $('voiceSel').onchange=e=>{VOICE=synth.getVoices().find(v=>v.name===e.target.val
 function updBtns(){$('voice').textContent=VOICE_ON?'🔊':'🔇';$('auto').classList.toggle('on',AUTO)}updBtns();
 $('voice').onclick=()=>{VOICE_ON=!VOICE_ON;ls.set('voz',VOICE_ON?'1':'0');updBtns();if(!VOICE_ON&&synth)synth.cancel()};
 $('auto').onclick=()=>{AUTO=!AUTO;ls.set('auto',AUTO?'1':'0');updBtns()};
+let PRE={};fetch('audio/manifest.json').then(r=>r.ok?r.json():{}).then(m=>{PRE=m||{};const n=Object.keys(PRE).length;if(n){const h=$('hint');h.style.display='block';h.textContent='🎧 '+n+' audios pregrabados del loro listos';setTimeout(()=>h.style.display='none',4000)}}).catch(()=>{});
+const hasAudio=t=>!!PRE[audioKey(t)];
 const TTS={prov:ls.get('ttsProv')||'piper',key:ls.get('ttsKey')||'',voice:ls.get('ttsVoice')||'',pvoice:ls.get('piperVoice')||'es_MX-claude-high',parrot:ls.get('parrot')!=='0'},AUDIO=new Map();
 let PIPER=null,piperVoiceLoaded=null;
 function piperStatus(t){const s=$('piperStatus');if(s)s.textContent=t;if(TTS.prov==='piper'){const h=$('hint');h.style.display='block';h.textContent='🎙️ '+t;if(/lista/.test(t))setTimeout(()=>h.style.display='none',3000)}}
@@ -213,11 +215,15 @@ async function netAudio(text,rate){
   return URL.createObjectURL(await r.blob());
 }
 // say(texto, {then, rate, keep}) — encola; al terminar todo, dispara el "siguiente" pendiente o el auto-avance
-function say(text,o={}){if(!text){o.then&&o.then();return}queue.push({text,...o});if(VOICE_ON&&cloudOn())cloudAudio(text,o.rate||1.05).catch(()=>{});if(!talking)nextLine()}
+function say(text,o={}){if(!text){o.then&&o.then();return}queue.push({text,...o});if(VOICE_ON&&cloudOn()&&!hasAudio(text))cloudAudio(text,o.rate||1.05).catch(()=>{});if(!talking)nextLine()}
 function nextLine(){
   const it=queue.shift();if(!it){talking=false;$('parrot').classList.remove('talk');clearTimeout(bubbleT);bubbleT=setTimeout(()=>$('bubble').classList.remove('show'),3000);afterTalk();return}
   talking=true;updNext();const b=$('bubble');b.textContent=it.show||it.text;b.classList.add('show');$('parrot').classList.add('talk');
   let finished=false;const done=()=>{if(finished)return;finished=true;it.then&&it.then();setTimeout(nextLine,250)};
+  if(VOICE_ON&&hasAudio(it.text)){const a=new Audio('audio/'+audioKey(it.text)+'.mp3');a.onended=done;a.onerror=()=>{delete PRE[audioKey(it.text)];browserOrCloud(it,done)};a.play().catch(()=>browserOrCloud(it,done));setTimeout(done,Math.max(9000,it.text.length*150));return}
+  browserOrCloud(it,done);
+}
+function browserOrCloud(it,done){
   if(VOICE_ON&&cloudOn()){cloudAudio(it.text,it.rate||1.05).then(url=>{const a=new Audio(url);if(TTS.prov==='piper'){a.preservesPitch=false;a.playbackRate=(TTS.parrot?1.12:1)*(it.rate||1.05)}a.onended=done;a.onerror=done;a.play().catch(done)}).catch(e=>{console.warn(e);$('hint').style.display='block';$('hint').textContent='⚠️ La voz '+(TTS.prov==='piper'?'Piper':'en la nube')+' falló ('+e.message+'). Uso la voz del navegador.';browserSpeak(it,done)});setTimeout(done,Math.max(9000,it.text.length*150))}
   else if(VOICE_ON&&synth)browserSpeak(it,done);
   else setTimeout(done,Math.min(7000,900+it.text.length*45));
@@ -241,30 +247,32 @@ function narrate(prev){
   if(st.stage==='lobby'){if(prev){const old=new Set(prev.crew.map(c=>c.id));const nu=st.crew.filter(c=>!old.has(c.id));if(nu.length&&queue.length<2)say(line('join',{name:nu[0].name,ani:''}))}return}
   if(first)return;
   if(st.stage==='intro'){if(st.phase===0)say(line('start'));return say(line('intro.'+st.phase))}
-  if(st.stage==='question'){const q=st.q;if(q.kind==='trial')return say(line('q.trial',{name:q.accusedName,charge:q.charge}),{then:()=>{Game.arm();say(line('go'))}});const pre=q.kind==='solo'&&q.d>=4?line('q.hard'):q.kind==='solo'&&q.d===1?line('q.easy'):line('q.'+q.kind);
-    return say(pre+' '+q.text,{show:pre,then:()=>{Game.arm();say(line('go'),{rate:1.15})}})}
+  if(st.stage==='question'){const q=st.q;if(q.kind==='trial'){const g=line('trialGen');return hasAudio(g)?say(g,{then:()=>{Game.arm();say(line('go'))}}):say(line('q.trial',{name:q.accusedName,charge:q.charge}),{then:()=>{Game.arm();say(line('go'))}})}const pre=q.kind==='solo'&&q.d>=4?line('q.hard'):q.kind==='solo'&&q.d===1?line('q.easy'):line('q.'+q.kind);
+    say(pre);return say(q.text,{show:'❓ '+q.text,then:()=>{Game.arm();say(line('go'),{rate:1.15})}})}
   if(st.stage==='mini'){const m=st.mini;
-    if(m.phase==='play'){const t=line('mini.'+m.type,{prompt:m.prompt||'',mode:MODE[m.mode]||''});
-      if(m.type==='dict'){say(t);say(m.text,{rate:.8,show:'🗣️ (escuchen bien…)'});return say('Repito: '+m.text,{rate:.75,show:'🗣️ (una vez más…)',then:()=>{Game.arm();say(line('go'))}})}
+    if(m.phase==='play'){if(m.type==='draw'){say(line('drawGen'));say(m.prompt);return say(line(m.mode==='best'?'modeBest':'modeWorst'),{then:()=>{Game.arm();say(line('go'))}})}
+      const t=line('mini.'+m.type,{prompt:m.prompt||'',mode:MODE[m.mode]||''});
+      if(m.type==='dict'){say(t);say(m.text,{rate:.8,show:'🗣️ (escuchen bien…)'});say(line('repeat'));return say(m.text,{rate:.75,show:'🗣️ (una vez más…)',then:()=>{Game.arm();say(line('go'))}})}
       return say(t,{then:()=>{Game.arm();say(line('go'))}})}
-    if(m.phase==='vote')return say(`¡A votar! Los de a bordo eligen en su celular el ${MODE[m.mode]} dibujo.`);return}
+    if(m.phase==='vote')return say(line(m.mode==='best'?'voteBest':'voteWorst'));return}
   if(st.stage==='end')return say(st.sunk?line('sunk'):(st.goal.have>=st.goal.need?line('win'):line('lose')));
   if(st.stage==='reveal'&&prev){
     const r=st.result,pm=Object.fromEntries((prev.crew||[]).map(c=>[c.id,c.alive]));
     const fell=st.crew.filter(c=>pm[c.id]===true&&!c.alive),back=st.crew.filter(c=>pm[c.id]===false&&c.alive);
-    let t='';const pick=a=>a[Math.floor(Math.random()*a.length)];
-    if(r.kind==='mini')t=(r.art?line('art')+' ':'')+line('miniEnd')+(fell.length?' '+line('miniFall',{name:fell[0].name}):'');
-    else if(r.kind==='vote')t=line('vote');
-    else if(r.kind==='trial')t=fell.length?line('guilty'):line('innocent');
-    else if(r.kind==='council'&&!fell.length)t=/acertó/.test(r.lines.join(' '))?line('councilOk'):line('none');
-    else if(r.kind==='shop'&&/Sin mayoría/.test(r.title))t=line('noMajority');
-    else if(r.kind==='shop')t=/guarda/.test(r.lines.join(' '))?line('save'):line('shop');
-    else if(r.kind==='shield')t=st.crew.some(c=>c.immune)?line('shieldOk'):line('shieldNo');
-    else if(!fell.length&&!back.length&&['solo','group','splitQ','council'].includes(r.kind))t=line('none');
-    if(fell.length&&r.kind!=='trial'&&r.kind!=='mini'){const f=pick(fell);t+=' '+line(fell.length>=Math.max(3,prev.alive/2)?'many':'few',{n:fell.length,name:f.name,ani:''})}
-    if(back.length)t+=' '+line('back',{name:pick(back).name});
-    if(st.sunk)t+=' '+line('sunk');
-    say(t.trim()||line('miniEnd'));
+    const parts=[];const pick=a=>a[Math.floor(Math.random()*a.length)];const P_=x=>{if(x)parts.push(x)};
+    if(r.kind==='mini'){if(r.art)P_(line('art'));P_(line('miniEnd'));if(fell.length)P_(line('miniFall',{name:fell[0].name}))}
+    else if(r.kind==='vote')P_(line('vote'));
+    else if(r.kind==='trial')P_(fell.length?line('guilty'):line('innocent'));
+    else if(r.kind==='council'&&!fell.length)P_(/acertó/.test(r.lines.join(' '))?line('councilOk'):line('none'));
+    else if(r.kind==='shop'&&/Sin mayoría/.test(r.title))P_(line('noMajority'));
+    else if(r.kind==='shop')P_(/guarda/.test(r.lines.join(' '))?line('save'):line('shop'));
+    else if(r.kind==='shield')P_(st.crew.some(c=>c.immune)?line('shieldOk'):line('shieldNo'));
+    else if(!fell.length&&!back.length&&['solo','group','splitQ','council'].includes(r.kind))P_(line('none'));
+    if(fell.length&&r.kind!=='trial'&&r.kind!=='mini')P_(line(fell.length>=Math.max(3,prev.alive/2)?'many':'few',{n:fell.length,name:pick(fell).name,ani:''}));
+    if(back.length)P_(line('back',{name:pick(back).name}));
+    if(st.sunk)P_(line('sunk'));
+    if(!parts.length)P_(line('miniEnd'));
+    parts.forEach(x=>say(x));
   }
 }
 

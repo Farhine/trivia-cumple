@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Estudio de audio · A La Deriva</title>
+<style>
+:root{--paper:#fff4dc;--ink:#3a2412;--acc:#ff5d8f;--ok:#1f9e6a;--bad:#d64545}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(#7ec8ff,#2b6cb0) fixed;font:16px/1.45 system-ui,sans-serif;color:var(--ink)}
+main{max-width:860px;margin:0 auto;padding:20px 16px}
+.card{background:var(--paper);border-radius:18px;padding:18px 20px;margin-bottom:14px;box-shadow:0 6px 0 rgba(0,0,0,.15)}
+h1{margin:0 0 4px;color:#fff;text-shadow:0 3px 0 rgba(0,0,0,.3)}
+label{display:block;font-weight:700;margin:8px 0 4px}
+input,select{width:100%;font:inherit;padding:9px;border-radius:10px;border:2px solid #e9cf9d;background:#fffaf0}
+button{font:inherit;font-weight:800;border:0;border-radius:12px;padding:11px 18px;background:var(--ink);color:var(--paper);cursor:pointer;margin:6px 6px 0 0}
+button.pri{background:var(--acc);color:#fff}button:disabled{opacity:.4;cursor:default}
+.bar{height:16px;background:#e9cf9d;border-radius:8px;overflow:hidden;margin:10px 0}.bar div{height:100%;background:var(--ok);width:0;transition:width .3s}
+.stats{display:flex;gap:18px;flex-wrap:wrap;font-weight:800}
+#log{max-height:300px;overflow:auto;font-size:13px;background:#fffaf0;border-radius:10px;padding:8px;margin-top:10px}
+#log div{padding:2px 0;border-bottom:1px solid #f0e2c4}.ok{color:var(--ok)}.err{color:var(--bad)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+small{opacity:.75}
+</style></head><body><main>
+<h1>🎙️ Estudio de audio del loro</h1>
+<p style="color:#fff;font-weight:700;margin-top:0">Genera de una sola vez todas las frases fijas del narrador y las preguntas con tu voz de ElevenLabs, y descárgalas en un ZIP.</p>
+<div class="card">
+  <label>Clave API de ElevenLabs</label><input id="key" type="password" placeholder="sk_…">
+  <label>Voice ID de tu loro</label><input id="voice" placeholder="Ej: pNInz6obpgDQGcFmaJgB">
+  <div class="row"><div><label>Modelo</label><select id="model"><option value="eleven_multilingual_v2">Multilingual v2 (estable)</option><option value="eleven_v3">Eleven v3 (más expresivo)</option><option value="eleven_flash_v2_5">Flash v2.5 (más barato)</option></select></div>
+  <div><label>Estilo / exageración</label><select id="style"><option value="0.6">Alto (recomendado)</option><option value="0.35">Medio</option><option value="0.8">Muy teatral</option></select></div></div>
+  <small>La clave queda solo en este navegador. Se usa la misma que en el panel 🎙️ del juego.</small>
+</div>
+<div class="card">
+  <div class="stats"><span>Frases: <b id="nLines">…</b></span><span>Preguntas: <b id="nQs">…</b></span><span>Caracteres: <b id="nChars">…</b></span><span>Ya grabadas: <b id="nHave">0</b></span></div>
+  <label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="incQ" checked style="width:auto"> Incluir las preguntas (lectura de cada pregunta)</label>
+  <button class="pri" id="test">▶ Probar 1 frase</button><button class="pri" id="go">🎬 Generar todo</button><button id="stop" disabled>⏸ Pausar</button><button id="zip" disabled>⬇ Descargar ZIP</button>
+  <div class="bar"><div id="bar"></div></div><div id="status" style="font-weight:800"></div>
+  <div id="log"></div>
+  <small>Si se corta o te quedas sin créditos, puedes pausar y descargar lo que lleves; al volver a generar, se salta lo ya grabado mientras no cierres la pestaña.</small>
+</div>
+<div class="card"><b>Después:</b> envía el archivo <code>audios-loro.zip</code> al chat con Claude, o descomprímelo dentro de la carpeta del juego (debe quedar una carpeta <code>audio/</code> con <code>manifest.json</code>) y súbelo con GitHub Desktop.</div>
+</main>
+<script src="lib/jszip.min.js"></script>
+<script src="narrator.js"></script>
+<script src="engine.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+const ls={get:k=>{try{return localStorage.getItem(k)}catch(e){return null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}}};
+$('key').value=ls.get('ttsKey')||'';$('voice').value=ls.get('ttsVoice')||'';
+['key','voice'].forEach(id=>$(id).onchange=()=>{ls.set(id==='key'?'ttsKey':'ttsVoice',$(id).value.trim())});
+let ITEMS=[],DONE=new Map(),running=false;
+async function build(){
+  const bank=await fetch('questions.json').then(r=>r.json());
+  const lines=new Set(fixedLines());
+  DRAW_PROMPTS.forEach(t=>lines.add(t));DICTATIONS.forEach(t=>lines.add(t));DILEMMAS.forEach(d=>lines.add(d.q));
+  const qs=new Set([...bank.trivia.map(q=>q.q),...bank.splits.map(s=>s.q)]);
+  return{lines:[...lines],qs:[...qs]};
+}
+let SETS=null;
+function refresh(){ITEMS=[...SETS.lines,...($('incQ').checked?SETS.qs:[])].map(t=>({t,k:audioKey(t)}));
+  $('nLines').textContent=SETS.lines.length;$('nQs').textContent=SETS.qs.length;$('nChars').textContent=ITEMS.reduce((a,x)=>a+x.t.length,0).toLocaleString('es-CL');$('nHave').textContent=DONE.size;
+  $('bar').style.width=(ITEMS.filter(x=>DONE.has(x.k)).length/ITEMS.length*100)+'%';$('zip').disabled=!DONE.size}
+build().then(s=>{SETS=s;refresh()});$('incQ').onchange=refresh;
+function log(msg,cls){const d=document.createElement('div');d.className=cls||'';d.textContent=msg;$('log').prepend(d)}
+async function tts(text){
+  const key=$('key').value.trim(),voice=$('voice').value.trim(),model=$('model').value;
+  if(!key||!voice)throw new Error('Falta la clave o el Voice ID');
+  const body={text,model_id:model};
+  if(model!=='eleven_v3')body.voice_settings={stability:.35,similarity_boost:.75,style:+$('style').value,use_speaker_boost:true};
+  const r=await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(voice)}?output_format=mp3_44100_128`,{method:'POST',headers:{'xi-api-key':key,'Content-Type':'application/json',Accept:'audio/mpeg'},body:JSON.stringify(body)});
+  if(!r.ok){const t=await r.text();const e=new Error(`Error ${r.status}: ${t.slice(0,160)}`);e.status=r.status;throw e}
+  return await r.blob();
+}
+$('test').onclick=async()=>{try{$('status').textContent='Generando prueba…';const b=await tts(SETS.lines.find(t=>t.startsWith('Bienvenidos'))||SETS.lines[0]);new Audio(URL.createObjectURL(b)).play();$('status').textContent='✔ Prueba lista. ¿Te gusta? Entonces genera todo.'}catch(e){$('status').textContent='❌ '+e.message}};
+$('go').onclick=async()=>{
+  if(running)return;running=true;$('go').disabled=true;$('stop').disabled=false;
+  const todo=ITEMS.filter(x=>!DONE.has(x.k));let i=0,fails=0;
+  const worker=async()=>{while(running&&i<todo.length){const it=todo[i++];
+    for(let a=0;a<3;a++){try{const b=await tts(it.t);DONE.set(it.k,{t:it.t,b});log('✔ '+it.t.slice(0,90),'ok');break}
+      catch(e){if(e.status===401||e.status===402||/quota|credit/i.test(e.message)){log('⛔ '+e.message,'err');running=false;break}
+        if(a===2){fails++;log('❌ '+it.t.slice(0,60)+' — '+e.message,'err')}else await new Promise(r=>setTimeout(r,1500*(a+1)))}}
+    refresh();$('status').textContent=`${DONE.size} de ${ITEMS.length} grabadas`+(fails?` · ${fails} con error`:'');}};
+  await Promise.all([worker(),worker()]);
+  running=false;$('go').disabled=false;$('stop').disabled=true;
+  $('status').textContent=(DONE.size>=ITEMS.length?'🎉 ¡Listo! Descarga el ZIP.':`Pausado: ${DONE.size} de ${ITEMS.length}. Puedes seguir o descargar lo que llevas.`);
+};
+$('stop').onclick=()=>{running=false;$('stop').disabled=true};
+$('zip').onclick=async()=>{
+  const zip=new JSZip(),dir=zip.folder('audio'),man={};
+  for(const [k,v] of DONE){dir.file(k+'.mp3',v.b);man[k]=v.t}
+  dir.file('manifest.json',JSON.stringify(man,null,1));
+  const blob=await zip.generateAsync({type:'blob'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='audios-loro.zip';a.click();
+};
+</script></body></html>
