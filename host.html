@@ -110,7 +110,7 @@ textarea{width:100%}
 <div id="panel"></div>
 <div id="narr"><div id="parrot">🦜</div><div id="bubble"></div></div>
 <div id="hint"></div>
-<div id="tts" style="display:none;position:fixed;right:22px;bottom:84px;z-index:13;background:#fff4dc;color:#3a2412;border-radius:16px;padding:16px;width:360px;box-shadow:0 10px 30px rgba(0,0,0,.4);font-weight:800"><div class="title" style="font-size:22px">🎙️ Voz del narrador</div><label>Proveedor<select id="ttsProv" style="width:100%"><option value="browser">Navegador (gratis)</option><option value="openai">OpenAI (gpt-4o-mini-tts)</option><option value="eleven">ElevenLabs</option></select></label><div id="ttsCloud"><label>Clave API<input id="ttsKey" type="password" style="width:100%;font:inherit;padding:6px;border-radius:8px;border:2px solid #e9cf9d" placeholder="sk-… / xi-…"></label><label>Voz<input id="ttsVoice" style="width:100%;font:inherit;padding:6px;border-radius:8px;border:2px solid #e9cf9d" placeholder="OpenAI: ash, ballad, coral… / ElevenLabs: voice_id"></label><p style="font-size:12px;font-weight:600;margin:6px 0">La clave se guarda solo en este navegador. Cada frase cuesta una fracción de centavo; las frases repetidas se reutilizan.</p></div><button class="btn" id="ttsTest">Probar voz</button> <button class="btn" id="ttsClose">Cerrar</button></div>
+<div id="tts" style="display:none;position:fixed;right:22px;bottom:84px;z-index:13;background:#fff4dc;color:#3a2412;border-radius:16px;padding:16px;width:360px;box-shadow:0 10px 30px rgba(0,0,0,.4);font-weight:800"><div class="title" style="font-size:22px">🎙️ Voz del narrador</div><label>Proveedor<select id="ttsProv" style="width:100%"><option value="piper">Piper neuronal (gratis, en el navegador)</option><option value="browser">Voz del sistema (gratis)</option><option value="openai">OpenAI (gpt-4o-mini-tts)</option><option value="eleven">ElevenLabs</option></select></label><div id="ttsPiper"><label>Voz Piper<select id="piperVoice" style="width:100%"><option value="es_MX-claude-high">México · Claude (alta calidad)</option><option value="es_MX-ald-medium">México · Ald</option><option value="es_ES-davefx-medium">España · Davefx</option><option value="es_ES-sharvard-medium">España · Sharvard</option></select></label><label style="display:flex;gap:8px;align-items:center;margin:6px 0"><input type="checkbox" id="parrotPitch"> Tono de loro (más agudo y rápido)</label><p id="piperStatus" style="font-size:12px;font-weight:600;margin:6px 0">La primera vez descarga la voz (~60 MB) y queda guardada en este navegador.</p></div><div id="ttsCloud"><label>Clave API<input id="ttsKey" type="password" style="width:100%;font:inherit;padding:6px;border-radius:8px;border:2px solid #e9cf9d" placeholder="sk-… / xi-…"></label><label>Voz<input id="ttsVoice" style="width:100%;font:inherit;padding:6px;border-radius:8px;border:2px solid #e9cf9d" placeholder="OpenAI: ash, ballad, coral… / ElevenLabs: voice_id"></label><p style="font-size:12px;font-weight:600;margin:6px 0">La clave se guarda solo en este navegador. Cada frase cuesta una fracción de centavo; las frases repetidas se reutilizan.</p></div><button class="btn" id="ttsTest">Probar voz</button> <button class="btn" id="ttsClose">Cerrar</button></div>
 <div id="ctrl"><button id="ttsBtn" title="Voz del narrador">🎙️</button><select id="voiceSel" title="Voz del narrador"></select><button id="voice">🔊</button><button id="auto" title="Avanzar solo cuando el loro termina">⏩ Auto</button><button id="reset">↺</button><button id="next">Siguiente ▶</button></div>
 
 <script src="lib/peerjs.min.js"></script>
@@ -118,7 +118,9 @@ textarea{width:100%}
 <script src="peer-config.js"></script>
 <script src="narrator.js"></script>
 <script src="engine.js"></script>
+<script type="importmap">{"imports":{"onnxruntime-web/wasm":"./lib/ort/ort.wasm.min.js"}}</script>
 <script type="module">import './scene3d.js';</script>
+<script type="module">import * as piper from './lib/piper/piper-tts-web.js';window.Piper=piper;window.dispatchEvent(new Event('piper-ready'));</script>
 <script>
 const $=id=>document.getElementById(id);
 const esc=t=>String(t??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -182,30 +184,46 @@ $('voiceSel').onchange=e=>{VOICE=synth.getVoices().find(v=>v.name===e.target.val
 function updBtns(){$('voice').textContent=VOICE_ON?'🔊':'🔇';$('auto').classList.toggle('on',AUTO)}updBtns();
 $('voice').onclick=()=>{VOICE_ON=!VOICE_ON;ls.set('voz',VOICE_ON?'1':'0');updBtns();if(!VOICE_ON&&synth)synth.cancel()};
 $('auto').onclick=()=>{AUTO=!AUTO;ls.set('auto',AUTO?'1':'0');updBtns()};
-const TTS={prov:ls.get('ttsProv')||'browser',key:ls.get('ttsKey')||'',voice:ls.get('ttsVoice')||''},AUDIO=new Map();
-function ttsUI(){$('ttsProv').value=TTS.prov;$('ttsKey').value=TTS.key;$('ttsVoice').value=TTS.voice;$('ttsCloud').style.display=TTS.prov==='browser'?'none':'block';$('voiceSel').style.display=TTS.prov==='browser'?'':'none'}
+const TTS={prov:ls.get('ttsProv')||'piper',key:ls.get('ttsKey')||'',voice:ls.get('ttsVoice')||'',pvoice:ls.get('piperVoice')||'es_MX-claude-high',parrot:ls.get('parrot')!=='0'},AUDIO=new Map();
+let PIPER=null,piperVoiceLoaded=null;
+function piperStatus(t){const s=$('piperStatus');if(s)s.textContent=t;if(TTS.prov==='piper'){const h=$('hint');h.style.display='block';h.textContent='🎙️ '+t;if(/lista/.test(t))setTimeout(()=>h.style.display='none',3000)}}
+async function piperSession(){
+  if(!window.Piper)await new Promise((res,rej)=>{window.addEventListener('piper-ready',res,{once:true});setTimeout(()=>rej(new Error('Piper no cargó')),15000)});
+  if(PIPER&&piperVoiceLoaded===TTS.pvoice)return PIPER;
+  if(!PIPER||piperVoiceLoaded!==TTS.pvoice){Piper.TtsSession._instance=null;piperVoiceLoaded=TTS.pvoice;
+    PIPER=Piper.TtsSession.create({voiceId:TTS.pvoice,progress:p=>{if(p&&p.total)piperStatus(`Descargando voz… ${Math.round(p.loaded/p.total*100)}%`)},logger:()=>{}});
+    PIPER.then(()=>piperStatus('Voz Piper lista ✔')).catch(e=>{PIPER=null;piperStatus('No se pudo cargar Piper: '+e.message)});}
+  return PIPER;
+}
+function ttsUI(){$('ttsProv').value=TTS.prov;$('ttsKey').value=TTS.key;$('ttsVoice').value=TTS.voice;$('piperVoice').value=TTS.pvoice;$('parrotPitch').checked=TTS.parrot;$('ttsCloud').style.display=/openai|eleven/.test(TTS.prov)?'block':'none';$('ttsPiper').style.display=TTS.prov==='piper'?'block':'none';$('voiceSel').style.display=TTS.prov==='browser'?'':'none'}
 $('ttsBtn').onclick=()=>{const p=$('tts');p.style.display=p.style.display==='none'?'block':'none';ttsUI()};$('ttsClose').onclick=()=>$('tts').style.display='none';
-['ttsProv','ttsKey','ttsVoice'].forEach(id=>$(id).onchange=()=>{TTS.prov=$('ttsProv').value;TTS.key=$('ttsKey').value.trim();TTS.voice=$('ttsVoice').value.trim();ls.set('ttsProv',TTS.prov);ls.set('ttsKey',TTS.key);ls.set('ttsVoice',TTS.voice);ttsUI()});
+['ttsProv','ttsKey','ttsVoice','piperVoice','parrotPitch'].forEach(id=>$(id).onchange=()=>{TTS.prov=$('ttsProv').value;TTS.key=$('ttsKey').value.trim();TTS.voice=$('ttsVoice').value.trim();TTS.pvoice=$('piperVoice').value;TTS.parrot=$('parrotPitch').checked;ls.set('ttsProv',TTS.prov);ls.set('ttsKey',TTS.key);ls.set('ttsVoice',TTS.voice);ls.set('piperVoice',TTS.pvoice);ls.set('parrot',TTS.parrot?'1':'0');ttsUI();if(TTS.prov==='piper')piperSession()});
+if(TTS.prov==='piper')setTimeout(piperSession,500);
 $('ttsTest').onclick=()=>say(line('lobby'));
-async function cloudAudio(text,rate){
-  const k=TTS.prov+'|'+TTS.voice+'|'+rate+'|'+text;if(AUDIO.has(k))return AUDIO.get(k);
+function cloudAudio(text,rate){
+  const k=TTS.prov+'|'+(TTS.prov==='piper'?TTS.pvoice:TTS.voice)+'|'+rate+'|'+text;if(AUDIO.has(k))return AUDIO.get(k);
+  const pr=(TTS.prov==='piper'?piperAudio(text):netAudio(text,rate));AUDIO.set(k,pr);pr.catch(()=>AUDIO.delete(k));return pr;
+}
+async function piperAudio(text){const s=await piperSession();const wav=await s.predict(text.replace(/[\u{1F300}-\u{1FAFF}\u2600-\u27BF]/gu,''));return URL.createObjectURL(wav)}
+async function netAudio(text,rate){
   let r;
   if(TTS.prov==='openai')r=await fetch('https://api.openai.com/v1/audio/speech',{method:'POST',headers:{Authorization:'Bearer '+TTS.key,'Content-Type':'application/json'},body:JSON.stringify({model:'gpt-4o-mini-tts',voice:TTS.voice||'ash',input:text,response_format:'mp3',speed:rate,instructions:'Eres el Capitán Loro, un loro pirata sarcástico y burlón que narra un juego de trivia en un cumpleaños. Habla en español latinoamericano con acento chileno suave, tono teatral, irónico y con energía, ritmo ágil. Exagera un poco las emociones.'})});
   else r=await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(TTS.voice||'pNInz6obpgDQGcFmaJgB')}?output_format=mp3_44100_128`,{method:'POST',headers:{'xi-api-key':TTS.key,'Content-Type':'application/json'},body:JSON.stringify({text,model_id:'eleven_multilingual_v2',voice_settings:{stability:.35,similarity_boost:.75,style:.6,speed:Math.min(1.2,Math.max(.7,rate))}})});
   if(!r.ok)throw new Error('TTS '+r.status+' '+(await r.text()).slice(0,120));
-  const url=URL.createObjectURL(await r.blob());AUDIO.set(k,url);return url;
+  return URL.createObjectURL(await r.blob());
 }
 // say(texto, {then, rate, keep}) — encola; al terminar todo, dispara el "siguiente" pendiente o el auto-avance
-function say(text,o={}){if(!text){o.then&&o.then();return}queue.push({text,...o});if(!talking)nextLine()}
+function say(text,o={}){if(!text){o.then&&o.then();return}queue.push({text,...o});if(VOICE_ON&&cloudOn())cloudAudio(text,o.rate||1.05).catch(()=>{});if(!talking)nextLine()}
 function nextLine(){
   const it=queue.shift();if(!it){talking=false;$('parrot').classList.remove('talk');clearTimeout(bubbleT);bubbleT=setTimeout(()=>$('bubble').classList.remove('show'),3000);afterTalk();return}
   talking=true;updNext();const b=$('bubble');b.textContent=it.show||it.text;b.classList.add('show');$('parrot').classList.add('talk');
   let finished=false;const done=()=>{if(finished)return;finished=true;it.then&&it.then();setTimeout(nextLine,250)};
-  if(VOICE_ON&&TTS.prov!=='browser'&&TTS.key){cloudAudio(it.text,it.rate||1.05).then(url=>{const a=new Audio(url);a.onended=done;a.onerror=done;a.play().catch(done)}).catch(e=>{console.warn(e);$('hint').style.display='block';$('hint').textContent='⚠️ La voz en la nube falló ('+e.message+'). Uso la voz del navegador.';browserSpeak(it,done)});setTimeout(done,Math.max(9000,it.text.length*150))}
+  if(VOICE_ON&&cloudOn()){cloudAudio(it.text,it.rate||1.05).then(url=>{const a=new Audio(url);if(TTS.prov==='piper'){a.preservesPitch=false;a.playbackRate=(TTS.parrot?1.12:1)*(it.rate||1.05)}a.onended=done;a.onerror=done;a.play().catch(done)}).catch(e=>{console.warn(e);$('hint').style.display='block';$('hint').textContent='⚠️ La voz '+(TTS.prov==='piper'?'Piper':'en la nube')+' falló ('+e.message+'). Uso la voz del navegador.';browserSpeak(it,done)});setTimeout(done,Math.max(9000,it.text.length*150))}
   else if(VOICE_ON&&synth)browserSpeak(it,done);
   else setTimeout(done,Math.min(7000,900+it.text.length*45));
 }
 function browserSpeak(it,done){if(!synth)return setTimeout(done,Math.min(7000,900+it.text.length*45));{const u=new SpeechSynthesisUtterance(it.text);u.lang=VOICE?VOICE.lang:'es-ES';if(VOICE)u.voice=VOICE;u.rate=it.rate||1.05;u.pitch=/natural|neural|online/i.test(VOICE&&VOICE.name||'')?1.05:1.2;u.onend=done;u.onerror=done;synth.speak(u);setTimeout(done,Math.max(4000,it.text.length*110))}}
+function cloudOn(){return TTS.prov==='piper'||(/openai|eleven/.test(TTS.prov)&&!!TTS.key)}
 function hush(){queue=[];if(synth)synth.cancel();talking=false;$('parrot').classList.remove('talk')}
 function updNext(){const n=$('next');n.classList.toggle('waiting',talking);n.textContent=talking?(pendingNext?'⏳ El loro termina…':'🦜 Hablando…'):({lobby:'Zarpar ▶',question:'Cerrar ▶',mini:'Terminar ▶',end:'Fin'}[st&&st.stage]||'Siguiente ▶')}
 function afterTalk(){updNext();clearTimeout(autoT);if(pendingNext){pendingNext=false;return Game.next()}

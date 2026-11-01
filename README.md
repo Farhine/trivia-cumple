@@ -25,7 +25,8 @@ Todos los invitados son **un solo equipo**. Los grupos del lobby solo organizan 
 - El Capitán Loro lee cada pregunta y comenta con humor (frases en `narrator.js`).
 - **Ritmo:** el cronómetro arranca cuando el loro termina de leer y Siguiente espera a que termine de hablar. **⏩ Auto** avanza solo. `Shift+S` lo hace callar.
 - **Voz (botón 🎙️):**
-  - *Navegador* (gratis): en **Microsoft Edge** hay voces "Natural" en español muy buenas.
+  - *Piper neuronal* (gratis, **por defecto**): voz neuronal que corre dentro del navegador. La primera vez descarga la voz (~60 MB) desde Hugging Face y queda guardada. Voces: México (Claude, Ald) y España (Davefx, Sharvard). Opción *Tono de loro* para hacerla más aguda.
+  - *Voz del sistema* (gratis): en **Microsoft Edge** hay voces "Natural" en español muy buenas.
   - *OpenAI* (`gpt-4o-mini-tts`): voz actuada con instrucciones de "loro pirata sarcástico". Necesita clave de platform.openai.com.
   - *ElevenLabs*: la más natural. Necesita clave de elevenlabs.io y un `voice_id`.
   - La clave queda guardada solo en el navegador del host. Si la nube falla, vuelve a la voz del navegador.
