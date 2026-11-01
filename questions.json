@@ -890,6 +890,523 @@
     "Wolfanio"
    ],
    "a": 0
+  },
+  {
+   "d": 1,
+   "q": "¿Qué animal hace 'miau'?",
+   "o": [
+    "Gato",
+    "Perro",
+    "Vaca",
+    "Pato"
+   ],
+   "a": 0
+  },
+  {
+   "d": 1,
+   "q": "¿Cuántas horas tiene un día?",
+   "o": [
+    "24",
+    "12",
+    "20",
+    "48"
+   ],
+   "a": 0
+  },
+  {
+   "d": 1,
+   "q": "¿De qué color es el cielo en un día despejado?",
+   "o": [
+    "Azul",
+    "Verde",
+    "Rojo",
+    "Morado"
+   ],
+   "a": 0
+  },
+  {
+   "d": 1,
+   "q": "¿Qué se celebra el 18 de septiembre en Chile?",
+   "o": [
+    "Fiestas Patrias",
+    "Navidad",
+    "Año Nuevo",
+    "Día del Trabajo"
+   ],
+   "a": 0
+  },
+  {
+   "d": 1,
+   "q": "¿Cuál de estos es un mamífero?",
+   "o": [
+    "Delfín",
+    "Tiburón",
+    "Pulpo",
+    "Pingüino"
+   ],
+   "a": 0
+  },
+  {
+   "d": 1,
+   "q": "¿Qué usamos para ver la hora?",
+   "o": [
+    "Reloj",
+    "Brújula",
+    "Termómetro",
+    "Balanza"
+   ],
+   "a": 0
+  },
+  {
+   "d": 1,
+   "q": "¿Cuántos meses tiene un año?",
+   "o": [
+    "12",
+    "10",
+    "11",
+    "13"
+   ],
+   "a": 0
+  },
+  {
+   "d": 1,
+   "q": "¿Qué animal tiene una trompa?",
+   "o": [
+    "Elefante",
+    "Rinoceronte",
+    "Hipopótamo",
+    "Jirafa"
+   ],
+   "a": 0
+  },
+  {
+   "d": 2,
+   "q": "¿Cuál es el océano que baña las costas de Chile?",
+   "o": [
+    "Pacífico",
+    "Atlántico",
+    "Índico",
+    "Antártico"
+   ],
+   "a": 0
+  },
+  {
+   "d": 2,
+   "q": "¿Cuál es la capital de Italia?",
+   "o": [
+    "Roma",
+    "Milán",
+    "Venecia",
+    "Nápoles"
+   ],
+   "a": 0
+  },
+  {
+   "d": 2,
+   "q": "¿Cuántos lados tiene un pentágono?",
+   "o": [
+    "5",
+    "6",
+    "4",
+    "8"
+   ],
+   "a": 0
+  },
+  {
+   "d": 2,
+   "q": "¿Qué animal es el símbolo de la paz?",
+   "o": [
+    "Paloma",
+    "Águila",
+    "Cisne",
+    "Búho"
+   ],
+   "a": 0
+  },
+  {
+   "d": 2,
+   "q": "¿Qué planeta tiene los anillos más visibles?",
+   "o": [
+    "Saturno",
+    "Júpiter",
+    "Urano",
+    "Marte"
+   ],
+   "a": 0
+  },
+  {
+   "d": 2,
+   "q": "¿Cuál es el resultado de 7 × 8?",
+   "o": [
+    "56",
+    "54",
+    "64",
+    "48"
+   ],
+   "a": 0
+  },
+  {
+   "d": 2,
+   "q": "¿En qué país se originaron los Juegos Olímpicos?",
+   "o": [
+    "Grecia",
+    "Italia",
+    "Francia",
+    "Egipto"
+   ],
+   "a": 0
+  },
+  {
+   "d": 2,
+   "q": "¿Qué órgano bombea la sangre?",
+   "o": [
+    "Corazón",
+    "Pulmón",
+    "Hígado",
+    "Riñón"
+   ],
+   "a": 0
+  },
+  {
+   "d": 2,
+   "q": "¿Cuál es la capital de Colombia?",
+   "o": [
+    "Bogotá",
+    "Medellín",
+    "Cali",
+    "Cartagena"
+   ],
+   "a": 0
+  },
+  {
+   "d": 2,
+   "q": "¿Qué gas absorben las plantas para la fotosíntesis?",
+   "o": [
+    "Dióxido de carbono",
+    "Oxígeno",
+    "Nitrógeno",
+    "Helio"
+   ],
+   "a": 0
+  },
+  {
+   "d": 3,
+   "q": "¿Quién pintó 'La noche estrellada'?",
+   "o": [
+    "Vincent van Gogh",
+    "Claude Monet",
+    "Pablo Picasso",
+    "Salvador Dalí"
+   ],
+   "a": 0
+  },
+  {
+   "d": 3,
+   "q": "¿Cuál es la capital de Portugal?",
+   "o": [
+    "Lisboa",
+    "Oporto",
+    "Coímbra",
+    "Braga"
+   ],
+   "a": 0
+  },
+  {
+   "d": 3,
+   "q": "¿Cuántos jugadores hay en un equipo de básquetbol en cancha?",
+   "o": [
+    "5",
+    "6",
+    "7",
+    "4"
+   ],
+   "a": 0
+  },
+  {
+   "d": 3,
+   "q": "¿Qué país tiene forma de bota?",
+   "o": [
+    "Italia",
+    "Grecia",
+    "Portugal",
+    "Croacia"
+   ],
+   "a": 0
+  },
+  {
+   "d": 3,
+   "q": "¿Cuál es el metal más abundante en la corteza terrestre?",
+   "o": [
+    "Aluminio",
+    "Hierro",
+    "Cobre",
+    "Oro"
+   ],
+   "a": 0
+  },
+  {
+   "d": 3,
+   "q": "¿En qué ciudad está la Torre Eiffel?",
+   "o": [
+    "París",
+    "Londres",
+    "Roma",
+    "Bruselas"
+   ],
+   "a": 0
+  },
+  {
+   "d": 3,
+   "q": "¿Cuál es el río más largo de Chile?",
+   "o": [
+    "Loa",
+    "Biobío",
+    "Maule",
+    "Baker"
+   ],
+   "a": 0
+  },
+  {
+   "d": 3,
+   "q": "¿Qué instrumento mide la presión atmosférica?",
+   "o": [
+    "Barómetro",
+    "Termómetro",
+    "Higrómetro",
+    "Anemómetro"
+   ],
+   "a": 0
+  },
+  {
+   "d": 3,
+   "q": "¿Quién escribió 'Don Quijote de la Mancha'?",
+   "o": [
+    "Miguel de Cervantes",
+    "Lope de Vega",
+    "Federico García Lorca",
+    "Francisco de Quevedo"
+   ],
+   "a": 0
+  },
+  {
+   "d": 3,
+   "q": "¿Cuántos segundos tiene una hora?",
+   "o": [
+    "3.600",
+    "6.000",
+    "1.440",
+    "360"
+   ],
+   "a": 0
+  },
+  {
+   "d": 3,
+   "q": "¿Qué animal es el más alto del mundo?",
+   "o": [
+    "Jirafa",
+    "Elefante",
+    "Avestruz",
+    "Camello"
+   ],
+   "a": 0
+  },
+  {
+   "d": 3,
+   "q": "¿Cuál es la capital de Uruguay?",
+   "o": [
+    "Montevideo",
+    "Punta del Este",
+    "Asunción",
+    "Salto"
+   ],
+   "a": 0
+  },
+  {
+   "d": 4,
+   "q": "¿Cuál es la capital de Marruecos?",
+   "o": [
+    "Rabat",
+    "Casablanca",
+    "Marrakech",
+    "Fez"
+   ],
+   "a": 0
+  },
+  {
+   "d": 4,
+   "q": "¿En qué año se inauguró el Metro de Santiago?",
+   "o": [
+    "1975",
+    "1968",
+    "1982",
+    "1990"
+   ],
+   "a": 0
+  },
+  {
+   "d": 4,
+   "q": "¿Qué científica ganó dos premios Nobel en distintas ciencias?",
+   "o": [
+    "Marie Curie",
+    "Rosalind Franklin",
+    "Ada Lovelace",
+    "Lise Meitner"
+   ],
+   "a": 0
+  },
+  {
+   "d": 4,
+   "q": "¿Cuál es el hueso más pequeño del cuerpo humano?",
+   "o": [
+    "Estribo",
+    "Yunque",
+    "Martillo",
+    "Falange"
+   ],
+   "a": 0
+  },
+  {
+   "d": 4,
+   "q": "¿Qué país tiene más pirámides en el mundo?",
+   "o": [
+    "Sudán",
+    "Egipto",
+    "México",
+    "Perú"
+   ],
+   "a": 0
+  },
+  {
+   "d": 4,
+   "q": "¿Cuál es la raíz cuadrada de 144?",
+   "o": [
+    "12",
+    "14",
+    "11",
+    "16"
+   ],
+   "a": 0
+  },
+  {
+   "d": 4,
+   "q": "¿Qué idioma tiene más hablantes nativos en Sudamérica?",
+   "o": [
+    "Español",
+    "Portugués",
+    "Quechua",
+    "Inglés"
+   ],
+   "a": 0
+  },
+  {
+   "d": 4,
+   "q": "¿Cuál es el desierto más grande del mundo?",
+   "o": [
+    "Antártico",
+    "Sahara",
+    "Gobi",
+    "Arábigo"
+   ],
+   "a": 0
+  },
+  {
+   "d": 4,
+   "q": "¿En qué año se separó la Unión Soviética?",
+   "o": [
+    "1991",
+    "1989",
+    "1993",
+    "1985"
+   ],
+   "a": 0
+  },
+  {
+   "d": 5,
+   "q": "¿Cuál es el número primo que sigue a 89?",
+   "o": [
+    "97",
+    "91",
+    "93",
+    "99"
+   ],
+   "a": 0
+  },
+  {
+   "d": 5,
+   "q": "¿Cuántos huesos tiene el cráneo humano adulto (sin contar el oído)?",
+   "o": [
+    "22",
+    "32",
+    "18",
+    "26"
+   ],
+   "a": 0
+  },
+  {
+   "d": 5,
+   "q": "¿Qué presidente de Chile asumió el 11 de marzo de 1990?",
+   "o": [
+    "Patricio Aylwin",
+    "Eduardo Frei Ruiz-Tagle",
+    "Ricardo Lagos",
+    "Salvador Allende"
+   ],
+   "a": 0
+  },
+  {
+   "d": 5,
+   "q": "¿Cuál es la capital de Islandia?",
+   "o": [
+    "Reikiavik",
+    "Oslo",
+    "Helsinki",
+    "Akureyri"
+   ],
+   "a": 0
+  },
+  {
+   "d": 5,
+   "q": "¿Qué estrella es la más cercana a la Tierra después del Sol?",
+   "o": [
+    "Próxima Centauri",
+    "Sirio",
+    "Betelgeuse",
+    "Vega"
+   ],
+   "a": 0
+  },
+  {
+   "d": 5,
+   "q": "¿Cuál es el país más pequeño del mundo?",
+   "o": [
+    "Ciudad del Vaticano",
+    "Mónaco",
+    "San Marino",
+    "Liechtenstein"
+   ],
+   "a": 0
+  },
+  {
+   "d": 5,
+   "q": "¿En qué año se publicó 'Don Quijote' (primera parte)?",
+   "o": [
+    "1605",
+    "1615",
+    "1592",
+    "1650"
+   ],
+   "a": 0
+  },
+  {
+   "d": 5,
+   "q": "¿Cuántos lados tiene un dodecágono?",
+   "o": [
+    "12",
+    "10",
+    "20",
+    "14"
+   ],
+   "a": 0
   }
  ],
  "splits": [

@@ -33,12 +33,26 @@ button:disabled{opacity:.5}button.sel:disabled{opacity:1}button.gone{opacity:.12
 .tmr{font-family:'Lilita One';font-size:44px;text-align:center;color:var(--acc)}
 .tag{display:inline-block;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;background:var(--ink);color:var(--card);padding:3px 8px;border-radius:6px}
 ol{padding-left:22px}
+.pow{display:flex;gap:6px;flex-wrap:wrap;margin:-4px 0 10px}.pow span{background:#fff;border-radius:99px;padding:4px 10px;font-weight:800;font-size:13px;box-shadow:0 3px 0 rgba(0,0,0,.15);animation:pop .4s}
+.pow .g{background:#ffd35c}
+#pad{width:100%;aspect-ratio:1;background:#fff;border-radius:14px;touch-action:none;display:block;box-shadow:inset 0 0 0 3px #e9cf9d}
+.pal{display:flex;gap:6px;margin:8px 0;flex-wrap:wrap}.pal button{width:40px;height:40px;padding:0;margin:0;border-radius:50%;flex:none}.pal button.on{outline:4px solid #3a2412}
+.pal .tool{width:auto;padding:0 12px;border-radius:12px;font-size:14px}
+.arts{display:grid;grid-template-columns:1fr 1fr;gap:10px}.arts button{padding:6px;margin:0;text-align:center}.arts img{width:100%;border-radius:10px;display:block}
+.prob{font-family:'Lilita One';font-size:56px;text-align:center;margin:10px 0}
+.mopts{display:grid;grid-template-columns:1fr 1fr;gap:10px}.mopts button{font-size:30px;text-align:center;font-family:'Lilita One';margin:0}
+.wg{position:relative;height:56vh;border-radius:18px;background:#fff4dc;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;overflow:hidden;user-select:none;-webkit-user-select:none;touch-action:none;box-shadow:0 5px 0 rgba(0,0,0,.15)}
+.wg h1{font-size:34px;margin:0 10px}.wg .big{font-size:90px}.wg .bar2{position:absolute;left:0;bottom:0;height:10px;background:#ff5d8f;transition:width linear}
+.wg.win{background:#7ae582}.wg.lose{background:#ff8a8a}
+.ball{position:absolute;width:44px;height:44px;border-radius:50%;background:#ff5d8f;box-shadow:0 4px 0 rgba(0,0,0,.2)}
+.target{position:absolute;width:110px;height:110px;border-radius:50%;border:5px dashed #3a2412;left:50%;top:50%;transform:translate(-50%,-50%)}
+.light{width:150px;height:150px;border-radius:50%;background:#d64545;box-shadow:0 0 40px rgba(0,0,0,.2)}.light.go{background:#2ecc71}
 </style></head><body><main id="app"><div class="card">Conectando…</div></main>
 <script src="lib/peerjs.min.js"></script>
 <script src="peer-config.js"></script>
 <script>
 const ls={get:k=>{try{return localStorage.getItem(k)}catch(e){return null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}},del:k=>{try{localStorage.removeItem(k)}catch(e){}}};
-let st=null,deadline=0,conn=null,peer=null,pendingName=null,status='';
+let st=null,deadline=0,conn=null,peer=null,pendingName=null,status='',ARTS=[];
 const app=document.getElementById('app');
 let sala=(new URLSearchParams(location.search).get('sala')||'').toUpperCase();
 let token=ls.get('tok_'+sala);
@@ -53,39 +67,159 @@ function connect(){
 function onData(x){
   if(x.err){if(x.err==='need_name'){token=null;ls.del('tok_'+sala);st=null;render()}else{alert(x.err);pendingName=null}return}
   if(x.token){token=x.token;ls.set('tok_'+sala,token);return}
-  st=x;if(x.q)deadline=Date.now()+x.q.left;render();
+  if(x.arts){ARTS=x.arts;MG=null;render();return}
+  st=x;if(x.q)deadline=Date.now()+x.q.left;if(x.mini)deadline=Date.now()+x.mini.left;render();
 }
-const s={emit:(t,a)=>{if(!conn||!conn.open)return;if(t==='group')conn.send({type:'group',gi:a});if(t==='answer')conn.send({type:'answer',i:a})}};
+function send(o){if(conn&&conn.open)conn.send(o)}
+const s={emit:(t,a)=>{if(t==='group')send({type:'group',gi:a});if(t==='answer')send({type:'answer',i:a})}};
 const esc=t=>String(t??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 function join(name){pendingName=name;if(conn&&conn.open)conn.send({type:'join',token,name});else connect()}
 const KIND={solo:'Trivia individual',shield:'🛡️ Escudo colectivo',shop:'🛒 Votación de compra',group:'👥 Respuesta grupal',split:'⚔️ Elige tu bando',splitQ:'⚔️ Desafío de bandos',vote:'🗳️ Votación del equipo',revive:'🔁 Rescate'};
+const MININAME={draw:'🎨 Galería del naufragio',math:'🧮 Cálculo bajo el agua',dict:'📝 El dictado del loro',wario:'⚡ Microjuegos relámpago'};
+let MG=null; // minijuego activo {key, cleanup}
+function header(){
+  const m=st.me;document.body.classList.toggle('dead',!m.alive&&st.stage!=='lobby');
+  let h=`<div class="me"><span class="big">${m.ani||'🐾'}</span><div><div class="title" style="font-size:24px">${esc(m.name)}</div><div style="font-weight:800;color:${m.alive?'var(--ok)':'var(--bad)'}">${m.alive?'⛵ A bordo':'🛟 En el agua'}${m.group?' · '+esc(m.group):''}</div></div></div>`;
+  const pw=[];if(m.immune)pw.push('🛡️ Escudo personal');if(m.fifty)pw.push('🔎 Pista secreta lista');
+  const g=[];if(st.mods.shield)g.push('🛡️ Escudo del barco');if(st.mods.fifty)g.push('✂️ 50/50 para todos');if(st.mods.double)g.push('x2 puntos');if(st.mods.hard)g.push('😈 Nivel 5');
+  if(pw.length||g.length)h+=`<div class="pow">${pw.map(x=>`<span>${x}</span>`).join('')}${g.map(x=>`<span class="g">${x}</span>`).join('')}</div>`;
+  if(st.stage!=='lobby')h+=`<div class="card" style="padding:12px 16px"><div style="display:flex;justify-content:space-between;font-weight:800"><span>🎯 ${st.goal.have}/${st.goal.need} a bordo</span><span>💰 Pozo: ${st.pool}</span></div><div style="height:8px;background:#e9cf9d;border-radius:4px;margin-top:8px"><div style="height:8px;border-radius:4px;width:${Math.min(100,st.goal.have/st.goal.need*100)}%;background:${st.goal.have>=st.goal.need?'var(--ok)':'var(--gold)'}"></div></div></div>`;
+  if(st.phase>=0&&st.stage!=='end')h+=`<div class="mut" style="color:#fff;font-weight:800">Isla ${st.phase+1}/10 · ${esc(st.phaseName)}</div>`;
+  return h;
+}
 function render(){
-  if(!st){app.innerHTML=`<h1 style="color:#fff;text-shadow:0 3px 0 rgba(0,0,0,.3)">🚢 El Arca a la Deriva</h1><div class="card"><p>Escribe tu nombre y te tocará un animal al azar.</p>${sala?`<p class="mut">Sala: <b>${esc(sala)}</b></p>`:`<input id="sl" maxlength="4" placeholder="Código de sala" style="text-transform:uppercase">`}<input id="nm" maxlength="20" placeholder="Tu nombre"><button class="pri" id="go">Entrar</button>${status?`<p style="color:var(--gold)">${esc(status)}</p>`:''}</div>`;
+  if(!st){if(MG){MG.cleanup&&MG.cleanup();MG=null}app.innerHTML=`<h1 style="color:#fff;text-shadow:0 3px 0 rgba(0,0,0,.3)">🚢 El Arca a la Deriva</h1><div class="card"><p>Escribe tu nombre y te tocará un animal al azar.</p>${sala?`<p class="mut">Sala: <b>${esc(sala)}</b></p>`:`<input id="sl" maxlength="4" placeholder="Código de sala" style="text-transform:uppercase">`}<input id="nm" maxlength="20" placeholder="Tu nombre"><button class="pri" id="go">Entrar</button>${status?`<p style="color:var(--bad)">${esc(status)}</p>`:''}</div>`;
     document.getElementById('go').onclick=()=>{const sl=document.getElementById('sl');if(sl){sala=sl.value.trim().toUpperCase();token=ls.get('tok_'+sala)}if(!sala)return alert('Escribe el código de sala');status='Conectando…';join(document.getElementById('nm').value);render()};return}
-  const m=st.me;document.body.classList.toggle('dead',!m.alive&&st.stage!=='lobby');let h=`<div class="me"><span class="big">${m.ani||'🐾'}</span><div><div class="title" style="font-size:24px">${esc(m.name)}</div><div style="font-weight:800;color:${m.alive?'var(--ok)':'var(--bad)'}">${m.alive?'⛵ A bordo':'🛟 En el agua'}</div></div></div><div class="bar"><span class="chip ${m.alive?'alive':'dead'}" style="display:none"></span>${m.group?`<span class="chip">${esc(m.group)}</span>`:''}${m.immune?'<span class="chip">🛡️</span>':''}</div>`;
-  if(st.stage!=='lobby')h+=`<div class="card" style="padding:12px 16px"><div style="display:flex;justify-content:space-between"><span>🎯 Meta del equipo: ${st.goal.have}/${st.goal.need} vivos</span><span>💰 Pozo: ${st.pool}</span></div><div style="height:8px;background:#2b2245;border-radius:4px;margin-top:8px"><div style="height:8px;border-radius:4px;width:${Math.min(100,st.goal.have/st.goal.need*100)}%;background:${st.goal.have>=st.goal.need?'var(--ok)':'var(--gold)'}"></div></div></div>`;
-  if(st.phase>=0&&st.stage!=='end')h+=`<div class="mut">Fase ${st.phase+1}/10 · ${esc(st.phaseName)}</div>`;
-  if(st.stage==='lobby'){h+=`<h2>Elige tu manada</h2>`+st.groups.map((g,i)=>`<button data-g="${i}" class="${m.gi===i?'sel':''}">${esc(g.name)} <span class="mut">(${g.n})</span></button>`).join('')+`<p class="mut">Si no eliges, te asignamos uno. Espera a que el anfitrión comience.</p>`}
-  else if(st.stage==='intro'){h+=`<div class="card"><h1>${esc(st.phaseName)}</h1><p>${esc(st.desc)}</p></div><p class="mut">Mira la pantalla grande…</p>`}
+  if(st.stage==='mini'&&st.mini)return renderMini();
+  if(MG){MG.cleanup&&MG.cleanup();MG=null}
+  const m=st.me;let h=header();
+  if(st.stage==='lobby'){h+=`<h2 style="color:#fff">Elige tu manada</h2>`+st.groups.map((g,i)=>`<button data-g="${i}" class="${m.gi===i?'sel':''}">${esc(g.name)} <span class="mut">(${g.n})</span></button>`).join('')+`<p class="mut" style="color:#fff">Si no eliges, te asignamos una. Espera a que zarpe el barco.</p>`}
+  else if(st.stage==='intro'){h+=`<div class="card"><h1>${esc(st.phaseName)}</h1><p>${esc(st.desc)}</p></div><p style="color:#fff;font-weight:800">👀 Mira la pantalla grande y escucha al loro…</p>`}
   else if(st.stage==='question'){const q=st.q;
-    h+=`<div class="card"><span class="tag">${KIND[q.kind]||''}</span>${q.side?` <span class="chip">Tu bando: ${esc(q.side)}</span>`:''}<h2>${esc(q.text)}</h2><div class="tmr" id="tmr"></div></div>`;
-    if(!q.can)h+=`<div class="card mut">Estás en el agua 🛟. Espera un rescate para volver a bordo.</div>`;
-    else{if(q.kind==='revive'&&!m.alive)h+=`<p>¡Acierta para tener chance de volver!</p>`;
+    h+=`<div class="card"><span class="tag">${KIND[q.kind]||''}</span>${q.side?` <span class="chip">Tu bando: ${esc(q.side)}</span>`:''}<h2>${esc(q.text)}</h2><div class="tmr" id="tmr">${q.armed?'':'🦜'}</div></div>`;
+    if(q.hinted)h+=`<div class="card" style="background:#ffd35c;font-weight:800">🔎 ¡Usaste tu pista secreta! Te quitamos 2 opciones incorrectas.</div>`;
+    if(!q.can)h+=`<div class="card mut">Estás en el agua 🛟. Espera un rescate o un minijuego para volver a bordo.</div>`;
+    else{if(q.kind==='revive'&&!m.alive)h+=`<p style="color:#fff;font-weight:800">¡Acierta para tener chance de volver!</p>`;
       h+=q.opts.map((o,i)=>`<button data-a="${i}" class="${q.mine===i?'sel':''} ${q.hide.includes(i)?'gone':''}" ${q.mine!=null||q.hide.includes(i)?'disabled':''}>${esc(o)}</button>`).join('');
-      if(q.mine!=null)h+=`<p class="mut">Respuesta enviada ✔</p>`}}
+      if(q.mine!=null)h+=`<p style="color:#fff;font-weight:800">Respuesta enviada ✔</p>`}}
   else if(st.stage==='reveal'){const r=st.result;let you='';
     if(r.correct>=0&&r.opts){you=r.mine==null?'<p class="mut">No respondiste</p>':(r.mine===r.correct?'<h1 style="color:var(--ok)">✅ ¡Correcto!</h1>':'<h1 style="color:var(--bad)">❌ Incorrecto</h1>');you+=`<p>Respuesta: <b>${esc(r.opts[r.correct])}</b></p>`}
-    h+=`<div class="card">${you}<h2>${esc(r.title)}</h2>${r.lines.map(l=>`<p>${esc(l)}</p>`).join('')}${r.events.map(l=>`<p><b>${esc(l)}</b></p>`).join('')}</div>`}
-  else if(st.stage==='end'){const win=st.goal.have>=st.goal.need;
-    h+=`<div class="card" style="text-align:center"><h1>${win?'🎉 ¡Llegamos a puerto!':'🌊 El arca se hundió'}</h1><p>Sobrevivieron ${st.goal.have} (meta: ${st.goal.need})</p><p>Pozo final: ${st.pool} pts</p></div><div class="card"><b>⭐ Más aciertos aportados al equipo</b><ol>${st.mvps.map(r=>`<li>${esc(r.name)} — ${r.hits}</li>`).join('')}</ol></div>`}
-  if(status)h=`<p style="color:var(--gold)">${esc(status)}</p>`+h;
+    if(r.kind==='mini'&&r.board){const mine=r.board.find(b=>b.name===m.name);you=`<h1>${esc(r.title)}</h1>${mine?`<p>Tu puntaje: <b>${mine.score} ${esc(r.unit)}</b></p>`:''}`}
+    h+=`<div class="card">${you}${r.kind==='mini'?'':`<h2>${esc(r.title)}</h2>`}${r.lines.map(l=>`<p>${esc(l)}</p>`).join('')}${r.events.map(l=>`<p><b>${esc(l)}</b></p>`).join('')}</div>`}
+  else if(st.stage==='end'){const win=!st.sunk&&st.goal.have>=st.goal.need;
+    h+=`<div class="card" style="text-align:center"><h1>${win?'🎉 ¡Llegamos a puerto!':'🌊 El arca se hundió'}</h1><p>A bordo: ${st.goal.have} (meta: ${st.goal.need})</p><p>Pozo final: ${st.pool}</p></div><div class="card"><b>⭐ Más aciertos aportados</b><ol>${st.mvps.map(r=>`<li>${r.ani||''} ${esc(r.name)} — ${r.hits}</li>`).join('')}</ol></div>`}
+  if(status)h=`<p style="color:#fff;font-weight:800">${esc(status)}</p>`+h;
   const ak=st.stage+(st.q?st.q.text:'')+(st.result?st.result.title:'');if(ak!==window._ak){window._ak=ak;h='<div class="anim">'+h+'</div>'}
   app.innerHTML=h;
   app.querySelectorAll('[data-g]').forEach(b=>b.onclick=()=>s.emit('group',+b.dataset.g));
-  app.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>s.emit('answer',+b.dataset.a));
+  app.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>{s.emit('answer',+b.dataset.a);buzz(30)});
   tick();
 }
-if(sala&&token)connect();else render();
-function tick(){const t=document.getElementById('tmr');if(t)t.textContent=Math.max(0,Math.ceil((deadline-Date.now())/1000))}
+function buzz(ms){try{navigator.vibrate&&navigator.vibrate(ms)}catch(e){}}
+function tick(){const t=document.getElementById('tmr');const armed=st&&(st.q?st.q.armed:st.mini?st.mini.armed:false);if(t&&armed)t.textContent=Math.max(0,Math.ceil((deadline-Date.now())/1000))}
 setInterval(tick,250);
+
+// ---------- minijuegos ----------
+function renderMini(){
+  const m=st.mini;
+  const key=m.id+'|'+m.phase+'|'+m.role+'|'+(m.type==='draw'?'':m.armed)+'|'+(m.phase==='vote'?ARTS.length:'');
+  if(MG&&MG.key===key){const hd=document.getElementById('mhead');if(hd)hd.innerHTML=header();if(MG.update)MG.update();tick();return}
+  if(MG){MG.cleanup&&MG.cleanup()}
+  MG={key};
+  app.innerHTML=`<div id="mhead">${header()}</div><div class="card anim"><span class="tag">Minijuego</span><h2 style="margin:6px 0">${MININAME[m.type]}</h2><div style="font-weight:800">${m.goal==='revive'?'🛟 ¡Gana y vuelves a bordo!':'🎁 El mejor de a bordo gana un premio'}</div><div class="tmr" id="tmr" style="font-size:34px">${m.armed?'':'🦜'}</div></div><div id="mg"></div>`;
+  const box=document.getElementById('mg');
+  if(m.done&&m.type!=='draw'&&m.phase!=='vote'){box.innerHTML='<div class="card"><h2>¡Enviado! ✔</h2><p>Mira la pantalla grande.</p></div>';return}
+  if(m.type==='draw')return m.phase==='vote'?mgVote(box,m):(m.role==='draw'?mgDraw(box,m):box.innerHTML='<div class="card"><h2>🎨 Los náufragos están dibujando…</h2><p>Prepárate para votar el '+(m.mode==='best'?'mejor':'peor')+' dibujo.</p></div>');
+  if(m.type==='wario'&&!m.armed)return mgSensors(box);
+  if(!m.armed){box.innerHTML='<div class="card"><h2>🦜 Escucha las instrucciones…</h2><p>El juego empieza cuando el loro diga ¡Ya!</p></div>';return}
+  if(m.type==='math')return mgMath(box,m);
+  if(m.type==='dict')return mgDict(box,m);
+  if(m.type==='wario')return mgWario(box,m);
+}
+function endIn(fn){const ms=Math.max(0,deadline-Date.now()-300);const t=setTimeout(fn,ms);return t}
+
+function mgDraw(box,m){
+  if(m.done){box.innerHTML='<div class="card"><h2>¡Dibujo enviado! 🎨</h2><p>Ahora los de a bordo van a votar.</p></div>';return}
+  box.innerHTML=`<div class="card"><b>Dibuja:</b> <span style="font-size:20px">«${esc(m.prompt)}»</span><canvas id="pad" width="600" height="600"></canvas>
+   <div class="pal">${['#3a2412','#ff5d8f','#3fa9ff','#ffb627','#2ecc71','#9b59b6','#ffffff'].map((c,i)=>`<button data-c="${c}" style="background:${c};${c==='#ffffff'?'box-shadow:inset 0 0 0 2px #ccc':''}" class="${i?'':'on'}"></button>`).join('')}<button class="tool" id="thick">✏️ Grosor</button><button class="tool" id="undo">↶</button></div>
+   <button class="pri" id="sendArt">¡Listo, enviar dibujo!</button></div>`;
+  const cv=document.getElementById('pad'),g=cv.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,600,600);g.lineCap=g.lineJoin='round';
+  let color='#3a2412',size=10,drawing=false,hist=[],sent=false;
+  const pos=e=>{const r=cv.getBoundingClientRect();return[(e.clientX-r.left)*600/r.width,(e.clientY-r.top)*600/r.height]};
+  cv.onpointerdown=e=>{drawing=true;hist.push(g.getImageData(0,0,600,600));if(hist.length>15)hist.shift();const[x,y]=pos(e);g.beginPath();g.moveTo(x,y);g.lineTo(x+.1,y+.1);g.strokeStyle=color;g.lineWidth=size;g.stroke();cv.setPointerCapture(e.pointerId)};
+  cv.onpointermove=e=>{if(!drawing)return;const[x,y]=pos(e);g.lineTo(x,y);g.stroke()};
+  cv.onpointerup=cv.onpointercancel=()=>drawing=false;
+  box.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{color=b.dataset.c;box.querySelectorAll('[data-c]').forEach(x=>x.classList.toggle('on',x===b))});
+  document.getElementById('thick').onclick=e=>{size=size===10?22:size===22?4:10;e.target.textContent='✏️ '+({4:'Fino',10:'Medio',22:'Grueso'})[size]};
+  document.getElementById('undo').onclick=()=>{const h=hist.pop();if(h)g.putImageData(h,0,0)};
+  const out=()=>{if(sent)return;sent=true;const c2=document.createElement('canvas');c2.width=c2.height=240;c2.getContext('2d').drawImage(cv,0,0,240,240);send({type:'mini',id:m.id,art:c2.toDataURL('image/jpeg',.6),final:true});buzz(60)};
+  document.getElementById('sendArt').onclick=()=>{out();box.innerHTML='<div class="card"><h2>¡Dibujo enviado! 🎨</h2></div>'};
+  let t=null;MG.update=()=>{if(st.mini&&st.mini.armed&&!t)t=endIn(out)};MG.update();MG.cleanup=()=>{clearTimeout(t);out()};
+}
+function mgVote(box,m){
+  if(m.role!=='vote'){box.innerHTML='<div class="card"><h2>🗳️ La tripulación está votando…</h2><p>¡Cruza los dedos!</p></div>';return}
+  if(!ARTS.length){box.innerHTML='<div class="card"><h2>Cargando dibujos…</h2></div>';return}
+  const draw=()=>{const my=st.mini&&st.mini.myVote;box.innerHTML=`<div class="card"><h2>Toca el ${m.mode==='best'?'MEJOR':'PEOR'} dibujo</h2><div class="arts">${ARTS.map(a=>`<button data-v="${a.id}" class="${my===a.id?'sel':''}"><img src="${a.img}"></button>`).join('')}</div>${my?'<p><b>Voto enviado ✔</b> (puedes cambiarlo)</p>':''}</div>`;
+    box.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>{send({type:'mini',id:m.id,vote:b.dataset.v});buzz(30)})};
+  draw();let last=st.mini.myVote;MG.update=()=>{if(st.mini&&st.mini.myVote!==last){last=st.mini.myVote;draw()}};
+}
+function mgMath(box,m){
+  let score=0,lock=false,sent=false;
+  const gen=()=>{const t=Math.random();let a,b,op,r;if(t<.4){a=2+Math.floor(Math.random()*30);b=2+Math.floor(Math.random()*30);op='+';r=a+b}else if(t<.7){a=10+Math.floor(Math.random()*40);b=1+Math.floor(Math.random()*a);op='−';r=a-b}else{a=2+Math.floor(Math.random()*9);b=2+Math.floor(Math.random()*9);op='×';r=a*b}
+    const set=new Set([r]);while(set.size<4){const d=r+Math.floor(Math.random()*11)-5;if(d>=0)set.add(d)}return{txt:`${a} ${op} ${b}`,r,opts:[...set].sort(()=>Math.random()-.5)}};
+  const show=()=>{const p=gen();box.innerHTML=`<div class="card"><div style="text-align:right;font-weight:800">✅ ${score}</div><div class="prob">${p.txt} = ?</div><div class="mopts">${p.opts.map(o=>`<button data-m="${o}">${o}</button>`).join('')}</div></div>`;
+    box.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{if(lock)return;if(+b.dataset.m===p.r){score++;buzz(20);show()}else{lock=true;b.style.background='#d64545';buzz(200);setTimeout(()=>{lock=false;show()},900)}})};
+  show();const fin=()=>{if(sent)return;sent=true;send({type:'mini',id:m.id,score,final:true})};const t=endIn(()=>{fin();box.innerHTML=`<div class="card"><h2>¡Tiempo! ${score} correctas</h2></div>`});
+  MG.cleanup=()=>{clearTimeout(t);fin()};
+}
+function mgDict(box,m){
+  box.innerHTML=`<div class="card"><h2>Escribe lo que dictó el loro</h2><textarea id="dt" rows="4" style="width:100%;font:inherit;font-size:20px;border:2px solid #e9cf9d;border-radius:12px;padding:10px" autocapitalize="sentences" autocomplete="off"></textarea><button class="pri" id="dsend">Enviar</button></div>`;
+  const ta=document.getElementById('dt');ta.focus();let tm=null,sent=false;
+  ta.oninput=()=>{clearTimeout(tm);tm=setTimeout(()=>send({type:'mini',id:m.id,text:ta.value}),400)};
+  const fin=()=>{if(sent)return;sent=true;send({type:'mini',id:m.id,text:ta.value,final:true})};
+  document.getElementById('dsend').onclick=()=>{fin();box.innerHTML='<div class="card"><h2>¡Enviado! ✔</h2></div>'};
+  const t=endIn(fin);MG.cleanup=()=>{clearTimeout(t);fin()};
+}
+// sensores (iOS pide permiso con un toque)
+let SENS={motion:false,orient:false,asked:false};
+function mgSensors(box){
+  const need=typeof DeviceOrientationEvent!=='undefined'&&typeof DeviceOrientationEvent.requestPermission==='function';
+  box.innerHTML=`<div class="card"><h2>📱 Prepárate</h2><p>Algunos microjuegos usan el giroscopio: vas a tener que agitar o inclinar el celular.</p>${need&&!SENS.asked?'<button class="pri" id="sens">Activar sensores</button>':'<p><b>Sensores listos ✔</b> El juego empieza con el ¡Ya! del loro.</p>'}</div>`;
+  const b=document.getElementById('sens');if(b)b.onclick=async()=>{SENS.asked=true;try{await DeviceOrientationEvent.requestPermission()}catch(e){}try{await DeviceMotionEvent.requestPermission()}catch(e){}MG=null;render()};
+}
+addEventListener('devicemotion',e=>{const a=e.accelerationIncludingGravity;if(a&&a.x!=null)SENS.motion=true});
+addEventListener('deviceorientation',e=>{if(e.gamma!=null)SENS.orient=true});
+function mgWario(box,m){
+  let i=0,score=0,cleanups=[],sent=false,timers=[];
+  const T=(f,ms)=>{const t=setTimeout(f,ms);timers.push(t);return t};
+  const games=(m.games||['tap','stop','avoid','swipe','tap']).map(g=>(g==='shake'&&!SENS.motion)?'tap':(g==='tilt'&&!SENS.orient)?'stop':g);
+  const finish=()=>{if(sent)return;sent=true;send({type:'mini',id:m.id,score,final:true});box.innerHTML=`<div class="card"><h2>¡Terminado! ${score/10} de ${games.length} ✔</h2></div>`};
+  const run=()=>{
+    cleanups.forEach(f=>f());cleanups=[];
+    if(i>=games.length)return finish();
+    const g=games[i++];
+    box.innerHTML=`<div class="wg" id="wg"><div class="big">${{tap:'👆',shake:'📳',tilt:'📱',stop:'🚦',avoid:'💣',swipe:'👉'}[g]}</div><h1>${i}/${games.length}</h1></div>`;
+    T(()=>play(g),900);
+  };
+  const result=(win)=>{const w=document.getElementById('wg');if(!w||w.dataset.done)return;w.dataset.done=1;if(win){score+=10;buzz(40)}else buzz(250);w.classList.add(win?'win':'lose');w.insertAdjacentHTML('beforeend',`<h1>${win?'¡Bien!':'¡Fallaste!'}</h1>`);cleanups.forEach(f=>f());cleanups=[];T(run,700)};
+  const play=(g)=>{
+    const w=document.getElementById('wg');const D=4500;
+    const bar='<div class="bar2" id="b2" style="width:100%"></div>';
+    const timeout=(winOnTimeout)=>{T(()=>result(!!winOnTimeout()),D);requestAnimationFrame(()=>{const b=document.getElementById('b2');if(b){b.style.transitionDuration=D+'ms';b.style.width='0%'}})};
+    if(g==='tap'){let n=0;w.innerHTML=`<h1>¡TOCA 15 VECES!</h1><div class="big" id="cnt">0</div>${bar}`;w.onpointerdown=()=>{n++;document.getElementById('cnt').textContent=n;if(n>=15)result(true)};cleanups.push(()=>w.onpointerdown=null);timeout(()=>n>=15)}
+    if(g==='shake'){let n=0,lastT=0;w.innerHTML=`<h1>¡AGITA EL CELULAR!</h1><div class="big" id="cnt">📳</div>${bar}`;const f=e=>{const a=e.accelerationIncludingGravity;if(!a)return;const mag=Math.hypot(a.x,a.y,a.z);if(mag>20&&Date.now()-lastT>150){lastT=Date.now();n++;document.getElementById('cnt').textContent=n+'/8';if(n>=8)result(true)}};addEventListener('devicemotion',f);cleanups.push(()=>removeEventListener('devicemotion',f));timeout(()=>n>=8)}
+    if(g==='tilt'){let x=.5,y=.5,inside=0;w.innerHTML=`<h1 style="position:absolute;top:10px">¡MANTÉN LA BOLA EN EL CÍRCULO!</h1><div class="target"></div><div class="ball" id="ball"></div>${bar}`;const ball=document.getElementById('ball');let gx=0,gy=0;
+      const f=e=>{gx=(e.gamma||0)/30;gy=((e.beta||0)-30)/30};addEventListener('deviceorientation',f);
+      let lastF=performance.now();const loop=now=>{const dt=(now-lastF)/1000;lastF=now;x=Math.min(1,Math.max(0,x+gx*dt*.9+(Math.random()-.5)*.02));y=Math.min(1,Math.max(0,y+gy*dt*.9+(Math.random()-.5)*.02));ball.style.left=`calc(${x*100}% - 22px)`;ball.style.top=`calc(${y*100}% - 22px)`;if(Math.hypot(x-.5,(y-.5)*1.3)<.12)inside+=dt;raf=requestAnimationFrame(loop)};let raf=requestAnimationFrame(loop);
+      cleanups.push(()=>{removeEventListener('deviceorientation',f);cancelAnimationFrame(raf)});timeout(()=>inside>=2.2)}
+    if(g==='stop'){let green=false,t0=0;w.innerHTML=`<h1>TOCA CUANDO ESTÉ VERDE</h1><div class="light" id="lt"></div>${bar}`;T(()=>{green=true;t0=Date.now();const l=document.getElementById('lt');if(l)l.classList.add('go')},1200+Math.random()*2200);
+      w.onpointerdown=()=>result(green&&Date.now()-t0<900);cleanups.push(()=>w.onpointerdown=null);timeout(()=>false)}
+    if(g==='avoid'){w.innerHTML=`<h1>¡NO TOQUES NADA!</h1><div class="big">💣</div>${bar}`;w.onpointerdown=()=>result(false);cleanups.push(()=>w.onpointerdown=null);timeout(()=>true)}
+    if(g==='swipe'){const dirs={derecha:'👉',izquierda:'👈',arriba:'👆',abajo:'👇'};const k=Object.keys(dirs)[Math.floor(Math.random()*4)];let sx=0,sy=0;w.innerHTML=`<h1>¡DESLIZA HACIA ${k.toUpperCase()}!</h1><div class="big">${dirs[k]}</div>${bar}`;
+      w.onpointerdown=e=>{sx=e.clientX;sy=e.clientY};w.onpointerup=e=>{const dx=e.clientX-sx,dy=e.clientY-sy;if(Math.hypot(dx,dy)<40)return;const d=Math.abs(dx)>Math.abs(dy)?(dx>0?'derecha':'izquierda'):(dy>0?'abajo':'arriba');result(d===k)};cleanups.push(()=>{w.onpointerdown=w.onpointerup=null});timeout(()=>false)}
+  };
+  run();
+  MG.cleanup=()=>{timers.forEach(clearTimeout);cleanups.forEach(f=>f());finish()};
+}
+if(sala&&token)connect();else render();
 </script></body></html>

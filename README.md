@@ -21,27 +21,36 @@ Todos los invitados son **un solo equipo**. Los grupos del lobby solo organizan 
 - Cada jugador elige su grupo desde el celular, o presiona *🔀 Repartir al azar*.
 - Quien llega tarde entra eliminado y puede volver en un rescate.
 
-## Las 10 islas (34 desafíos)
-| # | Isla | Desafíos | Dificultad |
-|---|------|----------|-----------|
-| 1 | Zarpe | 4 trivias individuales | ★–★★ |
-| 2 | Isla del Escudo | Escudo colectivo (60%) + 2 trivias | ★★ |
-| 3 | Isla del Dilema | Votación + 3 trivias | ★★–★★★ |
-| 4 | La Tormenta | 4 trivias | ★★★ |
-| 5 | Isla de los Bandos | Elegir bando + 2 desafíos de bandos (50%) | ★★★ |
-| 6 | Bahía del Rescate | Rescate + trivia + rescate | ★★–★★★ |
-| 7 | Isla de las Manadas | 3 respuestas de grupo | ★★★★ |
-| 8 | Mar de la Presión | Escudo colectivo + 2 trivias | ★★★★ |
-| 9 | El Último Faro | Votación + rescate + trivia | ★★★–★★★★ |
-| 10 | Puerto Final | Grupo + 3 trivias | ★★★★★ |
+## Narrador
+- El Capitán Loro lee cada pregunta y comenta con humor (banco de frases en `narrator.js`, agrega las que quieras).
+- **Voz natural:** abre `host.html` en **Microsoft Edge** y elige una voz "Natural" en el selector (abajo a la derecha). Chrome usa las voces de Google.
+- **Ritmo:** el cronómetro arranca cuando el loro termina de leer, y el botón Siguiente espera a que termine de hablar. Con **⏩ Auto** el juego avanza solo tras cada comentario. `Shift+S` lo hace callar.
 
-## Eventos automáticos (con probabilidad, máximo un rescate automático por pregunta)
-- 🚨 **Bote de emergencia** (35%, máx. 2 por partida): si quedan ≤25% a bordo, vuelve el 25% de los náufragos.
-- 🔥 **Ronda perfecta** (40%): si todos aciertan, vuelve 1 al azar.
-- 🐬 **Delfín amable** (6%): vuelve 1 al azar.
-- 💰 **Cofre flotante** (10%): +5 al pozo.
-- ⚡ **Rayo milagroso**: si el barco queda vacío, vuelve el 15%.
-- En los rescates, cada 4 a bordo que aciertan lanzan 1 salvavidas.
+## Las 10 islas
+| # | Isla | Desafíos |
+|---|------|----------|
+| 1 | Zarpe | 4 trivias ★–★★ |
+| 2 | Isla del Escudo | Escudo colectivo + 2 trivias + ⚡ microjuegos |
+| 3 | Isla del Dilema | Votación + 3 trivias |
+| 4 | La Tormenta | 4 trivias ★★★ + 🧮 cálculo |
+| 5 | Isla de los Bandos | Bandos + 2 desafíos de bando + trivia |
+| 6 | Bahía del Rescate | 🎨 dibujo + rescate + trivia + 📝 dictado |
+| 7 | Isla de las Manadas | 3 respuestas de grupo + ⚡ microjuegos |
+| 8 | Mar de la Presión | Escudo + 2 trivias ★★★★ + 🧮 cálculo |
+| 9 | El Último Faro | Votación + 🎨 dibujo + rescate + trivia |
+| 10 | Puerto Final | Grupo + 3 trivias ★★★★★ |
+
+## Minijuegos
+Los **náufragos** compiten para volver a bordo (vuelve 1 por cada 4 náufragos, mínimo 1); el mejor **de a bordo** gana un power-up personal: 🔎 pista secreta (2 opciones menos en su próxima pregunta) o 🛡️ escudo personal.
+- 🎨 **Galería del naufragio:** los náufragos dibujan en el celular; los de a bordo votan el mejor (o el peor) dibujo.
+- 🧮 **Cálculo bajo el agua:** 30 s de sumas, restas y multiplicaciones.
+- 📝 **Dictado del loro:** el loro dicta una frase dos veces; gana la escritura más precisa.
+- ⚡ **Microjuegos relámpago:** 5 retos de 5 s estilo WarioWare: tocar rápido, agitar el celular, inclinarlo (giroscopio), semáforo, no tocar y deslizar. En iPhone se pide permiso de sensores con un botón.
+
+## Eventos automáticos
+- 🚨 **Bote de emergencia** (35%, máx. 2 por partida) si quedan ≤25% a bordo.
+- 🔥 **Ronda perfecta** (40%): vuelve 1.  🐬 **Delfín** (6%): vuelve 1.  💰 **Cofre** (10%): +5 al pozo.
+- ⚡ Si el barco queda vacío: en las islas 1–3 hay un rescate garantizado (una vez); después, 40% de rayo milagroso (una vez). Si no sale, **el arca se hunde** y termina la partida.
 
 ## Dilemas grupales (vota todo el equipo vivo, gana la mayoría)
 Portal (pagar puntos para revivir 3) · Doble puntos vs. escudo para todos · Dado del destino · Pacto oscuro (revivir a todos pero la siguiente es nivel 5).
@@ -62,4 +71,4 @@ Edita `questions.json` (en la raíz):
 - `splits`: preguntas de opinión con 2 opciones para formar bandos.
 
 Tip: agrega preguntas sobre ti para darle toque de cumpleaños.
-Ajustes en `engine.js`: `GOAL` (meta de sobrevivientes), `TIME` (segundos por pregunta) y el arreglo `PHASES`.
+Ajustes en `engine.js`: `GOAL` (meta), `TIME` (segundos por pregunta), `PHASES`, `DRAW_PROMPTS` y `DICTATIONS`.

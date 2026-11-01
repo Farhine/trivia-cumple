@@ -8,16 +8,21 @@ const GOAL = 0.4;       // meta colectiva: terminar con al menos el 40% del equi
 // group (cuenta la mayoría de tu grupo), split (bandos), vote (dilema), revive (rescate), shop (votación de compra)
 const PHASES = [
   { name: 'Zarpe', desc: 'Calentamos motores. Respondes solo; si fallas, caes al agua.', steps: [['solo', 1], ['solo', 1], ['solo', 1], ['solo', 2]] },
-  { name: 'Isla del Escudo', desc: 'Si el 60% del barco acierta, todos quedan protegidos para la próxima caída.', steps: [['shield', 2], ['solo', 2], ['solo', 2]] },
+  { name: 'Isla del Escudo', desc: 'Si el 60% del barco acierta, todos quedan protegidos. Y al final, un minijuego relámpago.', steps: [['shield', 2], ['solo', 2], ['solo', 2], ['mini', 'wario']] },
   { name: 'Isla del Dilema', desc: 'La tripulación vota y la mayoría decide. Luego, a responder.', steps: [['vote'], ['solo', 2], ['solo', 2], ['solo', 3]] },
-  { name: 'La Tormenta', desc: 'Sube la dificultad y el oleaje. Agárrense.', steps: [['solo', 3], ['solo', 3], ['solo', 3], ['solo', 3]] },
-  { name: 'Isla de los Bandos', desc: 'El barco se divide en dos. Cada bando debe acertar al menos el 50% o pierde a quienes fallaron.', steps: [['split', 3], ['splitQ', 3], ['splitQ', 3]] },
-  { name: 'Bahía del Rescate', desc: 'Los náufragos también responden. Cada 4 a bordo que aciertan lanzan un salvavidas.', steps: [['revive', 2], ['solo', 3], ['revive', 3]] },
-  { name: 'Isla de las Manadas', desc: 'Cuenta la respuesta de la mayoría de tu grupo. Si el grupo acierta, todos se salvan.', steps: [['group', 4], ['group', 4], ['group', 4]] },
-  { name: 'Mar de la Presión', desc: 'Escudo colectivo y luego preguntas difíciles.', steps: [['shield', 4], ['solo', 4], ['solo', 4]] },
-  { name: 'El Último Faro', desc: 'Un dilema y la última oportunidad de rescatar náufragos.', steps: [['vote'], ['revive', 3], ['solo', 4]] },
+  { name: 'La Tormenta', desc: 'Sube la dificultad y el oleaje. Cierra con cálculo mental bajo la lluvia.', steps: [['solo', 3], ['solo', 3], ['solo', 3], ['solo', 3], ['mini', 'math']] },
+  { name: 'Isla de los Bandos', desc: 'El barco se divide en dos. Cada bando debe acertar al menos el 50% o pierde a quienes fallaron.', steps: [['split', 3], ['splitQ', 3], ['splitQ', 3], ['solo', 3]] },
+  { name: 'Bahía del Rescate', desc: 'Los náufragos dibujan, escriben y responden para volver a bordo.', steps: [['mini', 'draw'], ['revive', 3], ['solo', 3], ['mini', 'dict']] },
+  { name: 'Isla de las Manadas', desc: 'Cuenta la respuesta de la mayoría de tu grupo. Si el grupo acierta, todos se salvan.', steps: [['group', 4], ['group', 4], ['group', 4], ['mini', 'wario']] },
+  { name: 'Mar de la Presión', desc: 'Escudo colectivo, preguntas difíciles y matemática con nervios.', steps: [['shield', 4], ['solo', 4], ['solo', 4], ['mini', 'math']] },
+  { name: 'El Último Faro', desc: 'Un dilema, una galería de arte y la última oportunidad de rescatar náufragos.', steps: [['vote'], ['mini', 'draw'], ['revive', 3], ['solo', 4]] },
   { name: 'Puerto Final', desc: 'Nivel máximo. Lleguen a puerto con al menos el 40% de la tripulación.', steps: [['group', 5], ['solo', 5], ['solo', 5], ['solo', 5]] },
 ];
+
+const DRAW_PROMPTS = ['El Capitán Loro en traje de baño', 'Una jirafa dentro de un submarino', 'El cumpleañero como superhéroe', 'Un tiburón vegetariano', 'Una vaca surfeando', 'El barco hundiéndose con estilo', 'Un pulpo haciendo malabares', 'Una rata pirata con parche', 'Un elefante en una tina', 'La torta de cumpleaños más fea del mundo', 'Un pingüino en la playa con calor', 'Un gato que odia el agua... en el agua', 'Un delfín con lentes de sol', 'Una cebra sin rayas', 'El loro dormido en el mástil', 'Una sirena que es mitad perro'];
+const DICTATIONS = ['El loro capitán navega sin brújula y sin vergüenza', 'Una jirafa mareada vomitó sobre la cubierta', 'Los tiburones esperan pacientemente su almuerzo', 'Hoy celebramos un cumpleaños en medio del océano', 'El pulpo robó tres galletas y dos salvavidas', 'Nadie sabe nadar pero todos quieren torta', 'La tormenta se llevó el sombrero del capitán', 'El elefante pidió un bote más grande', 'Un pingüino elegante bailaba en la proa', 'Las olas gigantes no asustan a la tripulación'];
+const MINI_DUR = { draw: 60, math: 30, dict: 30, wario: 32 };
+const WARIO = ['tap', 'shake', 'tilt', 'stop', 'avoid', 'swipe'];
 
 // Compras con el pozo común, decididas por votación
 const SHOP = [
@@ -39,8 +44,8 @@ const award = (n, d) => { G.pool += n * d * (G.mods.double ? 2 : 1); };
 
 function reset() {
   clearTimeout(G && G.timer);
-  G = { stage: 'lobby', phase: -1, queue: [], cur: null, answers: {}, lastAnswers: {}, deadline: 0, result: null, mods: {}, pool: 0, used: new Set(), emergCount: 0, usedSplit: new Set(), usedDil: new Set(), emergency: false, sides: null, groups: (G && G.groups) || ['🔴 Rojo', '🔵 Azul', '🟢 Verde', '🟡 Amarillo'] };
-  for (const p of list()) Object.assign(p, { alive: true, immune: false, hide: [], side: null, hits: 0 });
+  G = { stage: 'lobby', phase: -1, queue: [], cur: null, answers: {}, lastAnswers: {}, deadline: 0, result: null, mods: {}, pool: 0, used: new Set(), emergCount: 0, usedSplit: new Set(), usedDraw: new Set(), usedDict: new Set(), mini: null, sunk: false, lightning: false, armed: false, usedDil: new Set(), emergency: false, sides: null, groups: (G && G.groups) || ['🔴 Rojo', '🔵 Azul', '🟢 Verde', '🟡 Amarillo'] };
+  for (const p of list()) Object.assign(p, { alive: true, immune: false, fifty: false, hinted: false, hide: [], side: null, hits: 0 });
 }
 
 function pickQ(d) {
@@ -77,13 +82,87 @@ function open(kind, q, who, extra = {}) {
   clearTimeout(G.timer);
   const id = ++QID;
   G.stage = 'question'; G.cur = { id, kind, who, ...q, ...extra }; G.answers = {};
-  G.deadline = Date.now() + TIME * 1000;
-  const hide = G.mods.fifty && q.correct >= 0 ? shuffle(q.opts.map((_, i) => i).filter(i => i !== q.correct)).slice(0, 2) : [];
+  G.deadline = 0; G.armed = false;
+  const wrong = () => shuffle(q.opts.map((_, i) => i).filter(i => i !== q.correct)).slice(0, 2);
+  const hide = G.mods.fifty && q.correct >= 0 ? wrong() : [];
   if (hide.length) G.mods.fifty = false;
-  for (const p of list()) p.hide = hide;
-  G.timer = setTimeout(() => { if (G.cur && G.cur.id === id) resolve(); }, TIME * 1000 + 400);
+  for (const p of list()) {
+    p.hide = hide; p.hinted = false;
+    if (!hide.length && p.fifty && q.correct >= 0 && (who === 'all' || p.alive)) { p.hide = wrong(); p.fifty = false; p.hinted = true; }
+  }
+  G.timer = setTimeout(() => arm(id), 15000); // por si el narrador no avisa
   push();
 }
+function arm(id) {
+  if (G.stage === 'question' && G.cur && G.cur.id === id && !G.armed) {
+    clearTimeout(G.timer); G.armed = true; G.deadline = Date.now() + TIME * 1000;
+    G.timer = setTimeout(() => { if (G.cur && G.cur.id === id) resolve(); }, TIME * 1000 + 400); push();
+  }
+  if (G.stage === 'mini' && G.mini && G.mini.id === id && !G.mini.armed) {
+    clearTimeout(G.timer); const m = G.mini; m.armed = true; m.deadline = Date.now() + m.dur * 1000;
+    G.timer = setTimeout(() => endPlay(id), m.dur * 1000 + 2500); push();
+  }
+}
+// ---------- Minijuegos ----------
+function openMini(type) {
+  clearTimeout(G.timer);
+  const id = ++QID, m = { id, type, phase: 'play', armed: false, dur: MINI_DUR[type], deadline: 0, scores: {}, arts: {}, votes: {}, seed: Math.floor(Math.random() * 1e9) };
+  if (type === 'draw') { m.prompt = DRAW_PROMPTS[pickFrom(DRAW_PROMPTS, G.usedDraw)]; m.mode = Math.random() < 0.7 ? 'best' : 'worst'; m.artists = (dead().length ? dead() : alive()).map(p => p.token); }
+  if (type === 'dict') m.text = DICTATIONS[pickFrom(DICTATIONS, G.usedDict)];
+  if (type === 'wario') m.games = shuffle(WARIO).slice(0, 5);
+  G.stage = 'mini'; G.mini = m; G.cur = null;
+  G.timer = setTimeout(() => arm(id), 20000);
+  push();
+}
+function endPlay(id) {
+  const m = G.mini; if (G.stage !== 'mini' || !m || m.id !== id || m.phase !== 'play') return;
+  clearTimeout(G.timer);
+  if (m.type === 'draw' && Object.keys(m.arts).length && alive().length) {
+    m.phase = 'vote'; m.deadline = Date.now() + 25000;
+    const arts = Object.entries(m.arts).map(([t, img]) => ({ id: t, img }));
+    for (const p of alive()) if (p.conn) HOOKS.send(p.conn, { arts: arts.filter(a => a.id !== p.token) });
+    G.timer = setTimeout(() => resolveMini(id), 25500);
+    return push();
+  }
+  resolveMini(id);
+}
+const norm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zñ0-9 ]/g, '').replace(/\s+/g, ' ').trim();
+function lev(a, b) { const d = Array.from({ length: b.length + 1 }, (_, i) => i); for (let i = 1; i <= a.length; i++) { let prev = d[0]; d[0] = i; for (let j = 1; j <= b.length; j++) { const t = d[j]; d[j] = Math.min(d[j] + 1, d[j - 1] + 1, prev + (a[i - 1] === b[j - 1] ? 0 : 1)); prev = t; } } return d[b.length]; }
+function resolveMini(id) {
+  const m = G.mini; if (G.stage !== 'mini' || !m || m.id !== id) return;
+  clearTimeout(G.timer);
+  const lines = [], events = [], score = {};
+  if (m.type === 'draw') { for (const t of Object.keys(m.arts)) score[t] = 0; for (const v of Object.values(m.votes)) if (v in score) score[v]++; }
+  else if (m.type === 'dict') { const ref = norm(m.text); for (const [t, txt] of Object.entries(m.scores)) { const s = norm(txt); score[t] = s ? Math.max(0, Math.round((1 - lev(s, ref) / Math.max(ref.length, s.length)) * 100)) : 0; } }
+  else for (const [t, v] of Object.entries(m.scores)) score[t] = Math.max(0, Math.min(999, Number(v) || 0));
+  const ranked = Object.keys(score).filter(t => P[t]).sort((a, b) => score[b] - score[a] || Math.random() - 0.5);
+  const unit = { draw: 'votos', dict: '% de precisión', math: 'correctas', wario: 'puntos' }[m.type];
+  const deadR = ranked.filter(t => !P[t].alive && score[t] > 0), aliveR = ranked.filter(t => P[t].alive && score[t] > 0);
+  let winnerArt = null;
+  if (m.type === 'draw') {
+    const best = ranked[0];
+    if (best && score[best] > 0) {
+      winnerArt = m.arts[best]; const p = P[best];
+      if (!p.alive) { p.alive = true; events.push(`🎨 El dibujo ${m.mode === 'best' ? 'favorito' : 'más horrible'} es de ${p.name}: ¡vuelve a bordo!`); }
+      else { const pw = givePower(p); events.push(`🎨 El dibujo ${m.mode === 'best' ? 'favorito' : 'más horrible'} es de ${p.name}: gana ${pw}`); }
+      if (dead().length >= 6 && ranked[1] && score[ranked[1]] > 0 && !P[ranked[1]].alive) { P[ranked[1]].alive = true; events.push(`🥈 Segundo lugar: también vuelve ${P[ranked[1]].name}`); }
+    } else lines.push('Nadie votó. El arte no es apreciado en este barco.');
+  } else {
+    const k = Math.max(1, Math.floor(dead().length / 4));
+    const back = deadR.slice(0, k).map(t => P[t]); back.forEach(p => p.alive = true);
+    if (back.length) events.push('🛟 Mejores náufragos, de vuelta a bordo: ' + names(back));
+    const nPow = alive().length > 12 ? 2 : 1;
+    aliveR.filter(t => !back.includes(P[t])).slice(0, nPow).forEach(t => events.push(`🎁 ${P[t].name} gana ${givePower(P[t])}`));
+    if (!ranked.length || !score[ranked[0]]) lines.push('Nadie sumó puntos. Impresionante, en el mal sentido.');
+  }
+  const board = ranked.slice(0, 6).map(t => ({ name: P[t].name, ani: P[t].ani, score: score[t], alive: P[t].alive }));
+  const title = { draw: '🎨 Galería del naufragio', math: '🧮 Cálculo bajo el agua', dict: '📝 El dictado del loro', wario: '⚡ Microjuegos relámpago' }[m.type];
+  G.lastAnswers = {};
+  G.result = { title, lines, events, correct: -1, kind: 'mini', mtype: m.type, board, unit, art: winnerArt, dictText: m.type === 'dict' ? m.text : null, mode: m.mode, prompt: m.prompt };
+  G.mini = null; G.stage = 'reveal'; push();
+}
+function givePower(p) { if (Math.random() < 0.5) { p.fifty = true; return '🔎 una pista secreta (2 opciones menos en su próxima pregunta)'; } p.immune = true; return '🛡️ un escudo personal'; }
+
 function show(title, line, fx) { if (fx) fx(); G.stage = 'reveal'; G.cur = null; G.lastAnswers = {}; G.result = { title, lines: [line], events: [], correct: -1 }; push(); }
 
 function startPhase(i) {
@@ -93,6 +172,7 @@ function startPhase(i) {
 }
 function runStep() {
   const s = G.queue.shift();
+  if (G.sunk) { G.stage = 'end'; G.cur = null; return push(); }
   if (!s) { if (G.phase >= PHASES.length - 1) { G.stage = 'end'; G.cur = null; return push(); } return startPhase(G.phase + 1); }
   const [k, d] = s;
   if (['solo', 'shield', 'group', 'splitQ'].includes(k)) return open(k, pickQ(d), 'alive');
@@ -100,6 +180,7 @@ function runStep() {
     if (!dead().length) return show('Rescate', '¡Nadie ha caído! +10 al pozo común.', () => { G.pool += 10; });
     return open(k, pickQ(d), 'all');
   }
+  if (k === 'mini') return openMini(d);
   if (k === 'split') { const sp = BANK.splits[pickFrom(BANK.splits, G.usedSplit)]; return open('split', { text: sp.q, opts: sp.o, correct: -1 }, 'alive'); }
   if (k === 'vote') { const i = pickFrom(DILEMMAS, G.usedDil); return open('vote', { text: DILEMMAS[i].q, opts: DILEMMAS[i].o, correct: -1 }, 'alive', { dil: i }); }
   if (k === 'shop') {
@@ -116,6 +197,7 @@ function next() {
     return startPhase(0);
   }
   if (G.stage === 'question') return resolve();
+  if (G.stage === 'mini') return G.mini.phase === 'play' ? endPlay(G.mini.id) : resolveMini(G.mini.id);
   if (G.stage === 'end') return;
   runStep();
 }
@@ -184,7 +266,7 @@ function resolve() {
     const n = Math.floor(okA.length / 4) || (okA.length && Math.random() < 0.5 ? 1 : 0), back = okD.slice(0, n);
     back.forEach(p => p.alive = true);
     title = '🔁 Rescate';
-    lines.push(`${okA.length} a bordo acertaron → ${n} salvavidas`, `${okD.length} eliminados acertaron`, back.length ? 'Vuelven: ' + names(back) : 'Nadie vuelve esta vez');
+    lines.push(`${okA.length} a bordo acertaron → ${n} salvavidas`, `${okD.length} náufragos acertaron`, back.length ? 'Vuelven: ' + names(back) : 'Nadie vuelve esta vez');
   } else if (c.kind === 'vote') {
     const { w, cnt } = majority(c, alive());
     title = '🗳️ El equipo decidió';
@@ -207,7 +289,11 @@ function resolve() {
     } else if (Math.random() < 0.06) { autoBack = true; events.push(revive([rnd(dead())], '🐬 Un delfín amable devolvió a')); }
   }
   if (lethal && Math.random() < 0.10) { G.pool += 5; events.push('💰 Un cofre flotante: +5 al pozo'); }
-  if (total && !alive().length) events.push(revive(shuffle(dead()).slice(0, Math.max(1, Math.ceil(total * 0.15))), '⚡ ¡Barco vacío! Un rayo milagroso trae de vuelta a'));
+  if (total && !alive().length) {
+    const early = G.phase < 3 && !G.earlyRescue;
+    if (early || (!G.lightning && Math.random() < 0.4)) { if (early) G.earlyRescue = true; else G.lightning = true; events.push(revive(shuffle(dead()).slice(0, Math.max(1, Math.ceil(total * 0.15))), '⚡ ¡Barco vacío! Un rayo milagroso trae de vuelta a')); }
+    else { G.sunk = true; events.push('🌊 No queda nadie a bordo. El arca se hunde...'); }
+  }
 
   if (!['vote', 'split', 'shop'].includes(c.kind)) { const f = G.mods.fifty; G.mods = {}; if (f) G.mods.fifty = true; }
   G.lastAnswers = A;
@@ -225,23 +311,32 @@ function hview() {
   if (G.stage === 'question' && c) {
     const { correct, items, ...rest } = c;
     const el = c.who === 'all' ? list() : alive();
-    q = { ...rest, left: G.deadline - Date.now(), answered: Object.keys(G.answers).length, eligible: el.length, hide: list()[0] ? list()[0].hide : [] };
+    q = { ...rest, armed: G.armed, left: G.armed ? G.deadline - Date.now() : TIME * 1000, answered: Object.keys(G.answers).length, eligible: el.length, hide: list()[0] ? list()[0].hide : [] };
   }
   return {
     ...phaseInfo(), phases: PHASES.map(p => p.name),  total: list().length, alive: alive().length,
     groups: G.groups.map((g, i) => ({ name: g, players: list().filter(p => p.group === i).map(p => ({ name: p.name, ani: p.ani, alive: p.alive, on: !!p.conn, immune: p.immune })) })),
     noGroup: list().filter(p => p.group == null).map(p => p.name),
-    crew: list().map(p => ({ id: p.token, name: p.name, ani: p.ani, alive: p.alive, immune: p.immune, on: !!p.conn, g: p.group, ans: G.stage === 'question' && !!G.answers[p.token] })),
-    q, result: G.stage === 'reveal' ? G.result : null, mvps: G.stage === 'end' ? mvps() : [],
+    crew: list().map(p => ({ id: p.token, name: p.name, ani: p.ani, alive: p.alive, immune: p.immune, fifty: !!p.fifty, on: !!p.conn, g: p.group, ans: (G.stage === 'question' && !!G.answers[p.token]) || (G.stage === 'mini' && !!G.mini && (p.token in G.mini.scores || p.token in G.mini.arts || p.token in G.mini.votes)) })),
+    q, mini: G.stage === 'mini' && G.mini ? miniView(null) : null, sunk: G.sunk, result: G.stage === 'reveal' ? G.result : null, mvps: G.stage === 'end' ? mvps() : [],
   };
 }
 function pview(p) {
   const c = G.cur;
-  const s = { ...phaseInfo(), me: { name: p.name, ani: p.ani, group: G.groups[p.group] || null, gi: p.group, alive: p.alive, immune: p.immune }, groups: G.groups.map((g, i) => ({ name: g, n: list().filter(x => x.group === i).length })) };
-  if (G.stage === 'question' && c) s.q = { kind: c.kind, text: c.text, opts: c.opts, left: G.deadline - Date.now(), can: c.who === 'all' || p.alive, mine: G.answers[p.token] ? G.answers[p.token].i : null, hide: p.hide || [], side: c.kind === 'splitQ' && G.sides ? G.sides[p.side] : null };
+  const s = { ...phaseInfo(), me: { name: p.name, ani: p.ani, group: G.groups[p.group] || null, gi: p.group, alive: p.alive, immune: p.immune, fifty: !!p.fifty }, groups: G.groups.map((g, i) => ({ name: g, n: list().filter(x => x.group === i).length })) };
+  if (G.stage === 'question' && c) s.q = { kind: c.kind, text: c.text, opts: c.opts, armed: G.armed, hinted: !!p.hinted, left: G.armed ? G.deadline - Date.now() : TIME * 1000, can: c.who === 'all' || p.alive, mine: G.answers[p.token] ? G.answers[p.token].i : null, hide: p.hide || [], side: c.kind === 'splitQ' && G.sides ? G.sides[p.side] : null };
   if (G.stage === 'reveal' && G.result) { const a = G.lastAnswers[p.token]; s.result = { ...G.result, mine: a ? a.i : null }; }
+  if (G.stage === 'mini' && G.mini) s.mini = miniView(p);
   if (G.stage === 'end') s.mvps = mvps();
   return s;
+}
+function miniView(p) {
+  const m = G.mini, v = { id: m.id, type: m.type, phase: m.phase, armed: m.armed, left: m.armed ? m.deadline - Date.now() : m.dur * 1000, dur: m.dur, prompt: m.prompt, mode: m.mode, seed: m.seed, games: m.games };
+  const sent = Object.keys(m.phase === 'vote' ? m.votes : (m.type === 'draw' ? m.arts : m.scores)).length;
+  if (!p) return { ...v, text: m.text, sent, artists: m.type === 'draw' ? m.artists.length : 0, arts: m.phase === 'vote' ? Object.entries(m.arts).map(([t, img]) => ({ id: t, img, name: P[t] ? P[t].name : '', ani: P[t] ? P[t].ani : '' })) : null, voters: alive().length };
+  let role = 'play';
+  if (m.type === 'draw') role = m.phase === 'play' ? (m.artists.includes(p.token) ? 'draw' : 'wait') : (p.alive ? 'vote' : 'wait');
+  return { ...v, role, goal: p.alive ? 'power' : 'revive', done: m.phase === 'vote' ? p.token in m.votes : (m.type === 'draw' ? p.token in m.arts : p.token in m.scores), myVote: m.votes[p.token] || null };
 }
 function push() {
   HOOKS.host(hview());
@@ -252,6 +347,7 @@ function push() {
 const Game = {
   init(bank, hooks) { BANK = bank; Object.assign(HOOKS, hooks); reset(); push(); },
   next, push() { if (G && BANK) push(); },
+  arm() { if (G.stage === 'question' && G.cur) arm(G.cur.id); if (G.stage === 'mini' && G.mini) arm(G.mini.id); },
   reset() { reset(); push(); },
   setGroups(arr) { if (G.stage !== 'lobby' || !Array.isArray(arr)) return; G.groups = arr.map(x => String(x).slice(0, 24)).filter(Boolean).slice(0, 10); if (!G.groups.length) G.groups = ['Grupo 1']; list().forEach(p => { if (p.group >= G.groups.length) p.group = null; }); push(); },
   shuffleGroups() { if (G.stage !== 'lobby') return; shuffle(list()).forEach((p, i) => p.group = i % G.groups.length); push(); },
@@ -271,6 +367,21 @@ const Game = {
     }
     const p = P[conn._t]; if (!p) return;
     if (m.type === 'group') { if (G.stage === 'lobby' && G.groups[m.gi] != null) { p.group = m.gi; push(); } }
+    if (m.type === 'mini') {
+      const g = G.mini; if (G.stage !== 'mini' || !g || g.id !== m.id) return;
+      if (g.phase === 'play') {
+        if (g.type === 'draw') { if (g.artists.includes(p.token) && typeof m.art === 'string' && m.art.startsWith('data:image/') && m.art.length < 120000) g.arts[p.token] = m.art; }
+        else if (g.type === 'dict') { if (typeof m.text === 'string') g.scores[p.token] = m.text.slice(0, 300); }
+        else if (typeof m.score === 'number') g.scores[p.token] = m.score;
+        const need = g.type === 'draw' ? g.artists.length : list().filter(x => x.conn).length;
+        const got = Object.keys(g.type === 'draw' ? g.arts : g.scores).length;
+        if (m.final && got >= need) setTimeout(() => endPlay(g.id), 600);
+      } else if (g.phase === 'vote' && p.alive && typeof m.vote === 'string' && m.vote !== p.token && m.vote in g.arts) {
+        g.votes[p.token] = m.vote;
+        if (Object.keys(g.votes).length >= alive().length) setTimeout(() => resolveMini(g.id), 800);
+      }
+      return push();
+    }
     if (m.type === 'answer') {
       const c = G.cur, i = m.i;
       if (G.stage !== 'question' || !c || (c.who !== 'all' && !p.alive) || G.answers[p.token]) return;
