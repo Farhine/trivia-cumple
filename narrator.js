@@ -92,3 +92,20 @@ function audioKey(t) {
 }
 // Todas las frases fijas (sin {variables}) que se pueden pregrabar
 function fixedLines() { const out = new Set(); const walk = o => { if (typeof o === 'string') { if (!/\{\w+\}/.test(o)) out.add(o); } else if (o && typeof o === 'object') Object.values(o).forEach(walk); }; walk(LINES); return [...out]; }
+
+// Carga los paquetes audio/pack1.zip, pack2.zip… (cada uno trae audio/<clave>.mp3 y audio/manifest.json)
+async function loadAudioPacks(onUrl) {
+  const man = {};
+  for (let i = 1; i <= 20; i++) {
+    let r; try { r = await fetch(`audio/pack${i}.zip`); } catch (e) { break; }
+    if (!r.ok) break;
+    const zip = await JSZip.loadAsync(await r.arrayBuffer());
+    const mf = zip.file('audio/manifest.json'); const m = mf ? JSON.parse(await mf.async('string')) : {};
+    await Promise.all(Object.values(zip.files).map(async f => {
+      const k = (f.name.match(/([0-9a-f]{16})\.mp3$/) || [])[1]; if (!k) return;
+      man[k] = m[k] || '';
+      if (onUrl) onUrl(k, URL.createObjectURL(new Blob([await f.async('arraybuffer')], { type: 'audio/mpeg' })));
+    }));
+  }
+  return man;
+}

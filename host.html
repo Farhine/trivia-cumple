@@ -116,6 +116,7 @@ textarea{width:100%}
 <script src="lib/peerjs.min.js"></script>
 <script src="lib/qrcode.js"></script>
 <script src="peer-config.js"></script>
+<script src="lib/jszip.min.js"></script>
 <script src="narrator.js"></script>
 <script src="engine.js"></script>
 <script type="importmap">{"imports":{"onnxruntime-web/wasm":"./lib/ort/ort.wasm.min.js"}}</script>
@@ -184,7 +185,7 @@ $('voiceSel').onchange=e=>{VOICE=synth.getVoices().find(v=>v.name===e.target.val
 function updBtns(){$('voice').textContent=VOICE_ON?'🔊':'🔇';$('auto').classList.toggle('on',AUTO)}updBtns();
 $('voice').onclick=()=>{VOICE_ON=!VOICE_ON;ls.set('voz',VOICE_ON?'1':'0');updBtns();if(!VOICE_ON&&synth)synth.cancel()};
 $('auto').onclick=()=>{AUTO=!AUTO;ls.set('auto',AUTO?'1':'0');updBtns()};
-let PRE={};fetch('audio/manifest.json').then(r=>r.ok?r.json():{}).then(m=>{PRE=m||{};const n=Object.keys(PRE).length;if(n){const h=$('hint');h.style.display='block';h.textContent='🎧 '+n+' audios pregrabados del loro listos';setTimeout(()=>h.style.display='none',4000)}}).catch(()=>{});
+let PRE={};loadAudioPacks((k,url)=>{PRE[k]=url}).then(()=>{const n=Object.keys(PRE).length;if(n){const h=$('hint');h.style.display='block';h.textContent='🎧 '+n+' audios pregrabados del loro listos';setTimeout(()=>h.style.display='none',4000)}}).catch(()=>{});
 const hasAudio=t=>!!PRE[audioKey(t)];
 const TTS={prov:ls.get('ttsProv')||'piper',key:ls.get('ttsKey')||'',voice:ls.get('ttsVoice')||'',pvoice:ls.get('piperVoice')||'es_MX-claude-high',parrot:ls.get('parrot')!=='0'},AUDIO=new Map();
 let PIPER=null,piperVoiceLoaded=null;
@@ -220,7 +221,7 @@ function nextLine(){
   const it=queue.shift();if(!it){talking=false;$('parrot').classList.remove('talk');clearTimeout(bubbleT);bubbleT=setTimeout(()=>$('bubble').classList.remove('show'),3000);afterTalk();return}
   talking=true;updNext();const b=$('bubble');b.textContent=it.show||it.text;b.classList.add('show');$('parrot').classList.add('talk');
   let finished=false;const done=()=>{if(finished)return;finished=true;it.then&&it.then();setTimeout(nextLine,250)};
-  if(VOICE_ON&&hasAudio(it.text)){const a=new Audio('audio/'+audioKey(it.text)+'.mp3');a.onended=done;a.onerror=()=>{delete PRE[audioKey(it.text)];browserOrCloud(it,done)};a.play().catch(()=>browserOrCloud(it,done));setTimeout(done,Math.max(9000,it.text.length*150));return}
+  if(VOICE_ON&&hasAudio(it.text)){const a=new Audio(PRE[audioKey(it.text)]);a.onended=done;a.onerror=()=>{delete PRE[audioKey(it.text)];browserOrCloud(it,done)};a.play().catch(()=>browserOrCloud(it,done));setTimeout(done,Math.max(9000,it.text.length*150));return}
   browserOrCloud(it,done);
 }
 function browserOrCloud(it,done){

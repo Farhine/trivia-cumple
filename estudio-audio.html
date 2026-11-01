@@ -28,14 +28,14 @@ small{opacity:.75}
   <small>La clave queda solo en este navegador. Se usa la misma que en el panel 🎙️ del juego.</small>
 </div>
 <div class="card">
-  <div class="stats"><span>Frases: <b id="nLines">…</b></span><span>Preguntas: <b id="nQs">…</b></span><span>Caracteres: <b id="nChars">…</b></span><span>Ya grabadas: <b id="nHave">0</b></span></div>
+  <div class="stats"><span>Frases: <b id="nLines">…</b></span><span>Preguntas: <b id="nQs">…</b></span><span>Caracteres: <b id="nChars">…</b></span><span>Ya en el juego: <b id="nOld">…</b></span><span>Pendientes: <b id="nPend">…</b></span><span>Nuevas en esta sesión: <b id="nHave">0</b></span></div>
   <label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="incQ" checked style="width:auto"> Incluir las preguntas (lectura de cada pregunta)</label>
   <button class="pri" id="test">▶ Probar 1 frase</button><button class="pri" id="go">🎬 Generar todo</button><button id="stop" disabled>⏸ Pausar</button><button id="zip" disabled>⬇ Descargar ZIP</button>
   <div class="bar"><div id="bar"></div></div><div id="status" style="font-weight:800"></div>
   <div id="log"></div>
-  <small>Si se corta o te quedas sin créditos, puedes pausar y descargar lo que lleves; al volver a generar, se salta lo ya grabado mientras no cierres la pestaña.</small>
+  <small>El estudio sabe qué audios ya están en el juego y solo genera los pendientes. Si te quedas sin créditos, descarga lo que llevas, mándalo, y cuando renueves créditos vuelve aquí: seguirá desde donde quedó. El ZIP trae solo los audios nuevos y el manifiesto completo.</small>
 </div>
-<div class="card"><b>Después:</b> envía el archivo <code>audios-loro.zip</code> al chat con Claude, o descomprímelo dentro de la carpeta del juego (debe quedar una carpeta <code>audio/</code> con <code>manifest.json</code>) y súbelo con GitHub Desktop.</div>
+<div class="card"><b>Después:</b> envía el archivo <code>audios-loro.zip</code> al chat con Claude. O hazlo tú: cópialo a la carpeta <code>audio/</code> del juego con el siguiente número libre (<code>pack2.zip</code>, <code>pack3.zip</code>…) y súbelo con GitHub Desktop.</div>
 </main>
 <script src="lib/jszip.min.js"></script>
 <script src="narrator.js"></script>
@@ -45,7 +45,7 @@ const $=id=>document.getElementById(id);
 const ls={get:k=>{try{return localStorage.getItem(k)}catch(e){return null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}}};
 $('key').value=ls.get('ttsKey')||'';$('voice').value=ls.get('ttsVoice')||'';
 ['key','voice'].forEach(id=>$(id).onchange=()=>{ls.set(id==='key'?'ttsKey':'ttsVoice',$(id).value.trim())});
-let ITEMS=[],DONE=new Map(),running=false;
+let ITEMS=[],DONE=new Map(),OLD={},running=false;
 async function build(){
   const bank=await fetch('questions.json').then(r=>r.json());
   const lines=new Set(fixedLines());
@@ -55,9 +55,10 @@ async function build(){
 }
 let SETS=null;
 function refresh(){ITEMS=[...SETS.lines,...($('incQ').checked?SETS.qs:[])].map(t=>({t,k:audioKey(t)}));
+  const pend=ITEMS.filter(x=>!OLD[x.k]&&!DONE.has(x.k));$('nOld').textContent=ITEMS.filter(x=>OLD[x.k]).length;$('nPend').textContent=pend.length+' ('+pend.reduce((a,x)=>a+x.t.length,0).toLocaleString('es-CL')+' caracteres)';
   $('nLines').textContent=SETS.lines.length;$('nQs').textContent=SETS.qs.length;$('nChars').textContent=ITEMS.reduce((a,x)=>a+x.t.length,0).toLocaleString('es-CL');$('nHave').textContent=DONE.size;
-  $('bar').style.width=(ITEMS.filter(x=>DONE.has(x.k)).length/ITEMS.length*100)+'%';$('zip').disabled=!DONE.size}
-build().then(s=>{SETS=s;refresh()});$('incQ').onchange=refresh;
+  $('bar').style.width=(ITEMS.filter(x=>DONE.has(x.k)||OLD[x.k]).length/ITEMS.length*100)+'%';$('zip').disabled=!DONE.size}
+Promise.all([build(),loadAudioPacks().catch(()=>({}))]).then(([s,m])=>{SETS=s;OLD=m||{};refresh()});$('incQ').onchange=refresh;
 function log(msg,cls){const d=document.createElement('div');d.className=cls||'';d.textContent=msg;$('log').prepend(d)}
 async function tts(text){
   const key=$('key').value.trim(),voice=$('voice').value.trim(),model=$('model').value;
@@ -71,21 +72,21 @@ async function tts(text){
 $('test').onclick=async()=>{try{$('status').textContent='Generando prueba…';const b=await tts(SETS.lines.find(t=>t.startsWith('Bienvenidos'))||SETS.lines[0]);new Audio(URL.createObjectURL(b)).play();$('status').textContent='✔ Prueba lista. ¿Te gusta? Entonces genera todo.'}catch(e){$('status').textContent='❌ '+e.message}};
 $('go').onclick=async()=>{
   if(running)return;running=true;$('go').disabled=true;$('stop').disabled=false;
-  const todo=ITEMS.filter(x=>!DONE.has(x.k));let i=0,fails=0;
+  const todo=ITEMS.filter(x=>!DONE.has(x.k)&&!OLD[x.k]);let i=0,fails=0;
   const worker=async()=>{while(running&&i<todo.length){const it=todo[i++];
     for(let a=0;a<3;a++){try{const b=await tts(it.t);DONE.set(it.k,{t:it.t,b});log('✔ '+it.t.slice(0,90),'ok');break}
       catch(e){if(e.status===401||e.status===402||/quota|credit/i.test(e.message)){log('⛔ '+e.message,'err');running=false;break}
         if(a===2){fails++;log('❌ '+it.t.slice(0,60)+' — '+e.message,'err')}else await new Promise(r=>setTimeout(r,1500*(a+1)))}}
-    refresh();$('status').textContent=`${DONE.size} de ${ITEMS.length} grabadas`+(fails?` · ${fails} con error`:'');}};
+    refresh();$('status').textContent=`${DONE.size} nuevas · faltan ${ITEMS.filter(x=>!DONE.has(x.k)&&!OLD[x.k]).length}`+(fails?` · ${fails} con error`:'');}};
   await Promise.all([worker(),worker()]);
   running=false;$('go').disabled=false;$('stop').disabled=true;
-  $('status').textContent=(DONE.size>=ITEMS.length?'🎉 ¡Listo! Descarga el ZIP.':`Pausado: ${DONE.size} de ${ITEMS.length}. Puedes seguir o descargar lo que llevas.`);
+  const left=ITEMS.filter(x=>!DONE.has(x.k)&&!OLD[x.k]).length;$('status').textContent=(!left?'🎉 ¡No falta nada! Descarga el ZIP.':`Pausado: faltan ${left}. Descarga lo que llevas y vuelve después por el resto.`);
 };
 $('stop').onclick=()=>{running=false;$('stop').disabled=true};
 $('zip').onclick=async()=>{
   const zip=new JSZip(),dir=zip.folder('audio'),man={};
   for(const [k,v] of DONE){dir.file(k+'.mp3',v.b);man[k]=v.t}
   dir.file('manifest.json',JSON.stringify(man,null,1));
-  const blob=await zip.generateAsync({type:'blob'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='audios-loro.zip';a.click();
+  const blob=await zip.generateAsync({type:'blob',compression:'STORE'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='audios-loro.zip';a.click();
 };
 </script></body></html>
