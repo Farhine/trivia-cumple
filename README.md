@@ -2,18 +2,17 @@
 
 Todos los invitados son **un solo equipo**. Los grupos del lobby solo organizan dinámicas y no compiten entre sí. Al final **ganan todos o pierden todos**: la meta es terminar con al menos el **40% del equipo vivo**.
 
-## Cómo jugar en la fiesta
-1. Instala Node.js (https://nodejs.org) en tu notebook.
-2. Descomprime esta carpeta, abre una terminal dentro de ella y ejecuta:
-   ```
-   npm install
-   npm start
-   ```
-3. Conecta el notebook a la TV y abre **http://localhost:3000/host.html**.
-4. Los invitados escanean el QR que aparece en la TV (deben estar en **la misma red WiFi** que el notebook).
-5. Avanza con el botón **Siguiente** o la **barra espaciadora**.
+## Cómo jugar en la fiesta (GitHub Pages, sin instalar nada)
+1. Activa GitHub Pages en el repositorio: **Settings → Pages → Branch: `main` / `(root)` → Save**.
+2. En el notebook conectado a la TV abre **https://farhine.github.io/trivia-cumple/host.html**.
+3. Los invitados escanean el QR o entran a https://farhine.github.io/trivia-cumple/ con el **código de sala**. Pueden usar WiFi o datos móviles.
+4. Avanza con **Siguiente** o la **barra espaciadora**.
 
-> Si los celulares no cargan: revisa que el firewall de tu notebook permita el puerto 3000 y que todos estén en la misma WiFi (no en datos móviles).
+> ⚠️ La partida vive en la pestaña del host: **no la cierres ni la recargues** durante el juego. Si un celular pierde conexión, se reconecta solo.
+> Para probar solo, abre el host en una ventana y `index.html` en otra de incógnito.
+
+### Modo offline (opcional, sin internet)
+`npm install && npm start` levanta la versión con servidor local (carpeta `public/`) en http://localhost:3000/host.html.
 
 ## Lobby
 - Edita los nombres de los grupos (uno por línea) y presiona *Guardar grupos*.
@@ -55,9 +54,9 @@ Al final de cada fase, el equipo **vota** en qué gastar el pozo:
 Al final se muestra quiénes aportaron más aciertos al equipo, como reconocimiento y no como ranking.
 
 ## Personalizar preguntas
-Edita `questions.json`:
+Edita `questions.json` (en la raíz):
 - `trivia`: `{"d": dificultad 1-5, "q": pregunta, "o": [4 opciones], "a": índice de la correcta (0 = primera)}`. Las opciones se mezclan solas.
 - `splits`: preguntas de opinión con 2 opciones para formar bandos.
 
 Tip: agrega preguntas sobre ti para darle toque de cumpleaños.
-Ajustes en `server.js`: `GOAL` (meta de sobrevivientes), `TIME` (segundos por pregunta) y el arreglo `PHASES`.
+Ajustes en `engine.js`: `GOAL` (meta de sobrevivientes), `TIME` (segundos por pregunta) y el arreglo `PHASES`.
