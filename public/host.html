@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pantalla del juego</title>
+<style>
+:root{--bg:#120d1f;--card:#1e1733;--ink:#f3eefc;--mut:#a99cc7;--acc:#ff4fa3;--ok:#3ddc97;--bad:#ff5c5c;--gold:#ffd35c}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 50% -20%,#3a1f5e,var(--bg) 60%) fixed;color:var(--ink);font:20px/1.4 system-ui,sans-serif;min-height:100vh}
+main{padding:28px 40px 110px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:20px;margin-bottom:20px}
+.stats span{background:var(--card);padding:8px 16px;border-radius:99px;margin-left:8px}
+.phases{display:flex;gap:6px;margin-bottom:24px}.phases div{flex:1;height:8px;border-radius:4px;background:#2f2550}.phases .done{background:var(--acc)}.phases .now{background:var(--gold)}
+h1{font-size:56px;margin:10px 0}h2{font-size:40px;margin:10px 0 24px}.mut{color:var(--mut)}
+.card{background:var(--card);border-radius:20px;padding:24px;margin-bottom:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:16px}.opt{background:#2f2550;border-radius:18px;padding:26px;font-size:30px;font-weight:700}
+.opt.right{background:#1c5a42}.opt.dim{opacity:.35}
+.p{display:inline-block;background:#2f2550;padding:4px 10px;border-radius:8px;margin:3px;font-size:17px}.p.x{opacity:.35;text-decoration:line-through}.p.off{border:1px dashed var(--mut)}
+.tmr{font-size:90px;font-weight:900;color:var(--gold);text-align:right}
+.lobby{display:grid;grid-template-columns:400px 1fr;gap:28px;align-items:start}
+.qr img{width:100%;border-radius:16px;background:#fff;padding:10px}
+.tag{display:inline-block;font-size:18px;letter-spacing:.08em;text-transform:uppercase;background:var(--acc);padding:4px 12px;border-radius:8px}
+.ev{font-size:28px;font-weight:700;color:var(--gold)}
+.ctrl{position:fixed;left:0;right:0;bottom:0;display:flex;gap:12px;padding:14px 40px;background:#0c0816ee}
+button{font:inherit;border:0;border-radius:14px;padding:12px 22px;background:#2f2550;color:var(--ink);cursor:pointer}button.pri{background:var(--acc);font-weight:700;flex:1}
+input{font:inherit;background:#2b2245;color:var(--ink);border:0;border-radius:10px;padding:10px;width:100%}
+ol li{margin:4px 0}
+</style></head><body><main id="app"></main>
+<div class="ctrl"><button class="pri" id="next">Siguiente ▶ (espacio)</button><button id="reset">Reiniciar</button></div>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const s=io();let st=null,deadline=0;const app=document.getElementById('app');
+const esc=t=>String(t??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+s.on('connect',()=>s.emit('host'));
+s.on('state',x=>{st=x;if(x.q)deadline=Date.now()+x.q.left;render()});
+document.getElementById('next').onclick=()=>s.emit('next');
+document.getElementById('reset').onclick=()=>{if(confirm('¿Reiniciar la partida? Los jugadores se mantienen.'))s.emit('reset')};
+document.addEventListener('keydown',e=>{if(e.code==='Space'&&e.target.tagName!=='INPUT'){e.preventDefault();s.emit('next')}});
+const KIND={solo:'Trivia individual · fallar = eliminado',shield:'🛡️ Escudo colectivo · el equipo necesita 60%',shop:'🛒 Votación de compra con el pozo común',group:'👥 Cuenta la mayoría de tu grupo',split:'⚔️ Elige tu bando',splitQ:'⚔️ Desafío de bandos · cada bando necesita 50%',vote:'🗳️ Votación del equipo',revive:'🔁 Rescate · vivos y eliminados responden'};
+const players=g=>g.players.map(p=>`<span class="p ${p.alive?'':'x'} ${p.on?'':'off'}">${p.immune?'🛡️':''}${esc(p.name)}</span>`).join('');
+function render(){
+  const lbl={lobby:'Siguiente: comenzar ▶',question:'Cerrar pregunta ▶',end:'Fin'}[st.stage]||'Siguiente ▶';
+  document.getElementById('next').textContent=lbl+' (espacio)';
+  let h=`<div class="top"><div><b>🎂 Trivia de Cumpleaños · un solo equipo</b>${st.phase>=0?` <span class="mut">· Fase ${st.phase+1}/10 · ${esc(st.phaseName)}</span>`:''}</div><div class="stats"><span>👥 ${st.total}</span><span style="color:var(--ok)">● ${st.alive} vivos</span><span style="color:var(--bad)">✖ ${st.total-st.alive}</span>${st.phase>=0?`<span>🎯 meta ${st.goal.need}</span><span>💰 pozo ${st.pool}</span>`:''}${st.mods.double?'<span>x2</span>':''}${st.mods.shield?'<span>🛡️ escudo</span>':''}${st.mods.fifty?'<span>✂️ 50/50</span>':''}${st.mods.hard?'<span>😈 nivel 5</span>':''}</div></div>`;
+  h+=`<div class="phases">${st.phases.map((_,i)=>`<div class="${i<st.phase?'done':i===st.phase?'now':''}"></div>`).join('')}</div>`;
+  if(st.stage==='lobby'){
+    h+=`<div class="lobby"><div class="card qr"><h2 style="font-size:28px">Escanea para jugar</h2>${st.qr?`<img src="${st.qr}">`:''}<p style="font-size:18px;word-break:break-all">${esc(st.join)}</p></div><div>
+    <div class="card"><b>Grupos</b> <span class="mut">(uno por línea)</span><textarea id="gr" rows="4" style="width:100%;font:inherit;background:#2b2245;color:var(--ink);border:0;border-radius:10px;padding:10px;margin-top:8px">${st.groups.map(g=>esc(g.name)).join('\n')}</textarea><button id="sg">Guardar grupos</button> <button id="shf">🔀 Repartir al azar</button></div>
+    <div class="grid">${st.groups.map(g=>`<div class="card"><b>${esc(g.name)}</b> <span class="mut">(${g.players.length})</span><div>${players(g)}</div></div>`).join('')}</div>
+    ${st.noGroup.length?`<div class="card"><b>Sin grupo</b> <span class="mut">(se asignan al comenzar)</span><div>${st.noGroup.map(n=>`<span class="p">${esc(n)}</span>`).join('')}</div></div>`:''}</div></div>`}
+  else if(st.stage==='intro'){h+=`<div class="card" style="text-align:center;padding:60px"><div class="mut">FASE ${st.phase+1}</div><h1>${esc(st.phaseName)}</h1><p style="font-size:30px">${esc(st.desc)}</p></div>`}
+  else if(st.stage==='question'){const q=st.q;
+    h+=`<div style="display:flex;justify-content:space-between;gap:20px"><div><span class="tag">${KIND[q.kind]||''}</span>${q.d?` <span class="mut">Dificultad ${'★'.repeat(q.d)}${'☆'.repeat(5-q.d)}</span>`:''}<h2>${esc(q.text)}</h2></div><div class="tmr" id="tmr"></div></div>
+    <div class="opts">${q.opts.map((o,i)=>`<div class="opt ${(q.hide||[]).includes(i)?'dim':''}">${'ABCD'[i]}. ${esc(o)}</div>`).join('')}</div><p class="mut">Respondieron ${q.answered} de ${q.eligible}</p>`}
+  else if(st.stage==='reveal'){const r=st.result;
+    if(r.opts&&r.correct>=0)h+=`<p class="mut">${esc(r.text)}</p><div class="opts">${r.opts.map((o,i)=>`<div class="opt ${i===r.correct?'right':'dim'}">${'ABCD'[i]}. ${esc(o)}</div>`).join('')}</div>`;
+    h+=`<div class="card" style="margin-top:16px"><h2>${esc(r.title)}</h2>${r.lines.map(l=>`<p>${esc(l)}</p>`).join('')}${r.events.map(l=>`<p class="ev">${esc(l)}</p>`).join('')}</div>`;
+    h+=`<div class="grid">${st.groups.map(g=>`<div class="card"><b>${esc(g.name)}</b><div>${players(g)}</div></div>`).join('')}</div>`}
+  if(st.stage!=='lobby'&&st.stage!=='end')h+=`<div class="card"><b>🎯 Meta del equipo: ${st.goal.have} / ${st.goal.need} vivos al final</b><div style="height:14px;background:#2b2245;border-radius:7px;margin-top:10px"><div style="height:14px;border-radius:7px;width:${Math.min(100,st.goal.have/st.goal.need*100)}%;background:${st.goal.have>=st.goal.need?'var(--ok)':'var(--gold)'}"></div></div></div>`;
+  else if(st.stage==='end'){const win=st.goal.have>=st.goal.need;h+=`<div class="card" style="text-align:center;padding:50px"><h1 style="font-size:80px">${win?'🎉 ¡GANARON TODOS!':'💀 El equipo cayó'}</h1><p style="font-size:34px">Sobrevivieron ${st.goal.have} de ${st.total} · meta ${st.goal.need} · pozo final ${st.pool}</p></div><div class="card"><b>⭐ Quienes más aportaron al equipo</b><ol style="font-size:28px">${st.mvps.map(r=>`<li>${esc(r.name)} — ${r.hits} aciertos</li>`).join('')}</ol></div>`}
+  app.innerHTML=h;
+  const sg=document.getElementById('sg');if(sg)sg.onclick=()=>s.emit('setGroups',document.getElementById('gr').value.split('\n').map(x=>x.trim()).filter(Boolean));
+  const sh=document.getElementById('shf');if(sh)sh.onclick=()=>s.emit('shuffleGroups');
+  tick();
+}
+function tick(){const t=document.getElementById('tmr');if(t)t.textContent=Math.max(0,Math.ceil((deadline-Date.now())/1000))}
+setInterval(tick,250);
+</script></body></html>

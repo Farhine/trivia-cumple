@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Jugar</title>
+<style>
+:root{--bg:#120d1f;--card:#1e1733;--ink:#f3eefc;--mut:#a99cc7;--acc:#ff4fa3;--ok:#3ddc97;--bad:#ff5c5c;--gold:#ffd35c}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 50% -20%,#3a1f5e,var(--bg) 60%) fixed;color:var(--ink);font:16px/1.4 system-ui,sans-serif;min-height:100vh}
+main{max-width:480px;margin:0 auto;padding:16px}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px;font-size:14px}
+.chip{background:var(--card);padding:5px 10px;border-radius:99px}.dead{color:var(--bad)}.alive{color:var(--ok)}
+h1{font-size:24px;margin:8px 0}h2{font-size:20px;margin:6px 0 14px}.mut{color:var(--mut)}
+.card{background:var(--card);border-radius:16px;padding:16px;margin-bottom:12px}
+button,input{font:inherit;width:100%;border:0;border-radius:14px;padding:16px;margin:6px 0;color:var(--ink)}
+input{background:#2b2245}button{background:#2f2550;font-weight:600;text-align:left}
+button.pri{background:var(--acc);text-align:center}button.sel{outline:3px solid var(--acc)}
+button:disabled{opacity:.45}button.gone{opacity:.15;text-decoration:line-through}
+.right{background:#1c5a42!important}.wrong{background:#6a2430!important}
+.tmr{font-size:40px;font-weight:800;text-align:center;color:var(--gold)}
+.tag{display:inline-block;font-size:12px;letter-spacing:.08em;text-transform:uppercase;background:var(--acc);padding:3px 8px;border-radius:6px}
+ol{padding-left:22px}
+</style></head><body><main id="app"><div class="card">Conectando…</div></main>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const s=io();let st=null,token=localStorage.getItem('tok'),deadline=0;
+const app=document.getElementById('app');
+const esc=t=>String(t??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function join(name){s.emit('join',{token,name},r=>{if(r.err){if(r.err==='need_name'){token=null;localStorage.removeItem('tok');st=null;render()}else alert(r.err);return}token=r.token;localStorage.setItem('tok',token)})}
+s.on('connect',()=>{if(token)join();else render()});
+s.on('state',x=>{st=x;if(x.q)deadline=Date.now()+x.q.left;render()});
+s.on('kicked',()=>{localStorage.removeItem('tok');token=null;st=null;render()});
+const KIND={solo:'Trivia individual',shield:'🛡️ Escudo colectivo',shop:'🛒 Votación de compra',group:'👥 Respuesta grupal',split:'⚔️ Elige tu bando',splitQ:'⚔️ Desafío de bandos',vote:'🗳️ Votación del equipo',revive:'🔁 Rescate'};
+function render(){
+  if(!st){app.innerHTML=`<h1>🎂 ¡Bienvenido!</h1><div class="card"><p>Escribe tu nombre para entrar al juego.</p><input id="nm" maxlength="20" placeholder="Tu nombre"><button class="pri" id="go">Entrar</button></div>`;
+    document.getElementById('go').onclick=()=>join(document.getElementById('nm').value);return}
+  const m=st.me;let h=`<div class="bar"><span class="chip"><b>${esc(m.name)}</b></span><span class="chip ${m.alive?'alive':'dead'}">${m.alive?'● Vivo':'✖ Eliminado'}</span>${m.group?`<span class="chip">${esc(m.group)}</span>`:''}${m.immune?'<span class="chip">🛡️</span>':''}</div>`;
+  if(st.stage!=='lobby')h+=`<div class="card" style="padding:12px 16px"><div style="display:flex;justify-content:space-between"><span>🎯 Meta del equipo: ${st.goal.have}/${st.goal.need} vivos</span><span>💰 Pozo: ${st.pool}</span></div><div style="height:8px;background:#2b2245;border-radius:4px;margin-top:8px"><div style="height:8px;border-radius:4px;width:${Math.min(100,st.goal.have/st.goal.need*100)}%;background:${st.goal.have>=st.goal.need?'var(--ok)':'var(--gold)'}"></div></div></div>`;
+  if(st.phase>=0&&st.stage!=='end')h+=`<div class="mut">Fase ${st.phase+1}/10 · ${esc(st.phaseName)}</div>`;
+  if(st.stage==='lobby'){h+=`<h2>Elige tu grupo</h2>`+st.groups.map((g,i)=>`<button data-g="${i}" class="${m.gi===i?'sel':''}">${esc(g.name)} <span class="mut">(${g.n})</span></button>`).join('')+`<p class="mut">Si no eliges, te asignamos uno. Espera a que el anfitrión comience.</p>`}
+  else if(st.stage==='intro'){h+=`<div class="card"><h1>${esc(st.phaseName)}</h1><p>${esc(st.desc)}</p></div><p class="mut">Mira la pantalla grande…</p>`}
+  else if(st.stage==='question'){const q=st.q;
+    h+=`<div class="card"><span class="tag">${KIND[q.kind]||''}</span>${q.side?` <span class="chip">Tu bando: ${esc(q.side)}</span>`:''}<h2>${esc(q.text)}</h2><div class="tmr" id="tmr"></div></div>`;
+    if(!q.can)h+=`<div class="card mut">Estás eliminado. Espera un evento de rescate para volver 👻</div>`;
+    else{if(q.kind==='revive'&&!m.alive)h+=`<p>¡Acierta para tener chance de volver!</p>`;
+      h+=q.opts.map((o,i)=>`<button data-a="${i}" class="${q.mine===i?'sel':''} ${q.hide.includes(i)?'gone':''}" ${q.mine!=null||q.hide.includes(i)?'disabled':''}>${esc(o)}</button>`).join('');
+      if(q.mine!=null)h+=`<p class="mut">Respuesta enviada ✔</p>`}}
+  else if(st.stage==='reveal'){const r=st.result;let you='';
+    if(r.correct>=0&&r.opts){you=r.mine==null?'<p class="mut">No respondiste</p>':(r.mine===r.correct?'<h1 style="color:var(--ok)">✅ ¡Correcto!</h1>':'<h1 style="color:var(--bad)">❌ Incorrecto</h1>');you+=`<p>Respuesta: <b>${esc(r.opts[r.correct])}</b></p>`}
+    h+=`<div class="card">${you}<h2>${esc(r.title)}</h2>${r.lines.map(l=>`<p>${esc(l)}</p>`).join('')}${r.events.map(l=>`<p><b>${esc(l)}</b></p>`).join('')}</div>`}
+  else if(st.stage==='end'){const win=st.goal.have>=st.goal.need;
+    h+=`<div class="card" style="text-align:center"><h1>${win?'🎉 ¡GANARON TODOS!':'💀 El equipo no lo logró'}</h1><p>Sobrevivieron ${st.goal.have} (meta: ${st.goal.need})</p><p>Pozo final: ${st.pool} pts</p></div><div class="card"><b>⭐ Más aciertos aportados al equipo</b><ol>${st.mvps.map(r=>`<li>${esc(r.name)} — ${r.hits}</li>`).join('')}</ol></div>`}
+  app.innerHTML=h;
+  app.querySelectorAll('[data-g]').forEach(b=>b.onclick=()=>s.emit('group',+b.dataset.g));
+  app.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>s.emit('answer',+b.dataset.a));
+  tick();
+}
+function tick(){const t=document.getElementById('tmr');if(t)t.textContent=Math.max(0,Math.ceil((deadline-Date.now())/1000))}
+setInterval(tick,250);
+</script></body></html>
