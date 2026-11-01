@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>El Arca a la Deriva</title>
+<title>A La Deriva</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@600;800&display=swap" rel="stylesheet">
 <style>
@@ -105,12 +105,13 @@ textarea{width:100%}
 #hint{position:fixed;right:22px;bottom:80px;z-index:12;background:rgba(0,0,0,.6);padding:8px 12px;border-radius:10px;font-size:13px;font-weight:800;max-width:330px;display:none}
 </style></head><body>
 <div id="scene"><div id="sky"></div><div id="sun"></div><div id="clouds"></div><div id="three"></div><div id="rain"></div><div id="flash"></div><div id="fallback"></div></div>
-<div id="hud"><div id="brand" class="title">🚢 El Arca a la Deriva</div><div id="route"></div><div id="stats"></div></div>
+<div id="hud"><div id="brand" class="title">🚢 A La Deriva</div><div id="route"></div><div id="stats"></div></div>
 <div id="goalbar"><div></div><span></span></div>
 <div id="panel"></div>
 <div id="narr"><div id="parrot">🦜</div><div id="bubble"></div></div>
 <div id="hint"></div>
-<div id="ctrl"><select id="voiceSel" title="Voz del narrador"></select><button id="voice">🔊</button><button id="auto" title="Avanzar solo cuando el loro termina">⏩ Auto</button><button id="reset">↺</button><button id="next">Siguiente ▶</button></div>
+<div id="tts" style="display:none;position:fixed;right:22px;bottom:84px;z-index:13;background:#fff4dc;color:#3a2412;border-radius:16px;padding:16px;width:360px;box-shadow:0 10px 30px rgba(0,0,0,.4);font-weight:800"><div class="title" style="font-size:22px">🎙️ Voz del narrador</div><label>Proveedor<select id="ttsProv" style="width:100%"><option value="browser">Navegador (gratis)</option><option value="openai">OpenAI (gpt-4o-mini-tts)</option><option value="eleven">ElevenLabs</option></select></label><div id="ttsCloud"><label>Clave API<input id="ttsKey" type="password" style="width:100%;font:inherit;padding:6px;border-radius:8px;border:2px solid #e9cf9d" placeholder="sk-… / xi-…"></label><label>Voz<input id="ttsVoice" style="width:100%;font:inherit;padding:6px;border-radius:8px;border:2px solid #e9cf9d" placeholder="OpenAI: ash, ballad, coral… / ElevenLabs: voice_id"></label><p style="font-size:12px;font-weight:600;margin:6px 0">La clave se guarda solo en este navegador. Cada frase cuesta una fracción de centavo; las frases repetidas se reutilizan.</p></div><button class="btn" id="ttsTest">Probar voz</button> <button class="btn" id="ttsClose">Cerrar</button></div>
+<div id="ctrl"><button id="ttsBtn" title="Voz del narrador">🎙️</button><select id="voiceSel" title="Voz del narrador"></select><button id="voice">🔊</button><button id="auto" title="Avanzar solo cuando el loro termina">⏩ Auto</button><button id="reset">↺</button><button id="next">Siguiente ▶</button></div>
 
 <script src="lib/peerjs.min.js"></script>
 <script src="lib/qrcode.js"></script>
@@ -176,19 +177,35 @@ function loadVoices(){if(!synth)return;const vs=synth.getVoices().filter(v=>/^es
   VOICE=vs.find(v=>v.name===saved)||vs[0]||null;if(VOICE)sel.value=VOICE.name;
   const natural=vs.some(v=>/natural|neural/i.test(v.name));const h=$('hint');h.style.display=natural?'none':'block';h.textContent='💡 Para una voz mucho más natural, abre esta pantalla en Microsoft Edge: trae voces "Natural" en español (Chile, México y España).';}
 if(synth){loadVoices();synth.onvoiceschanged=loadVoices}
+setTimeout(ttsUI,0);
 $('voiceSel').onchange=e=>{VOICE=synth.getVoices().find(v=>v.name===e.target.value)||VOICE;ls.set('vozNombre',e.target.value);say(line('idle'))};
 function updBtns(){$('voice').textContent=VOICE_ON?'🔊':'🔇';$('auto').classList.toggle('on',AUTO)}updBtns();
 $('voice').onclick=()=>{VOICE_ON=!VOICE_ON;ls.set('voz',VOICE_ON?'1':'0');updBtns();if(!VOICE_ON&&synth)synth.cancel()};
 $('auto').onclick=()=>{AUTO=!AUTO;ls.set('auto',AUTO?'1':'0');updBtns()};
+const TTS={prov:ls.get('ttsProv')||'browser',key:ls.get('ttsKey')||'',voice:ls.get('ttsVoice')||''},AUDIO=new Map();
+function ttsUI(){$('ttsProv').value=TTS.prov;$('ttsKey').value=TTS.key;$('ttsVoice').value=TTS.voice;$('ttsCloud').style.display=TTS.prov==='browser'?'none':'block';$('voiceSel').style.display=TTS.prov==='browser'?'':'none'}
+$('ttsBtn').onclick=()=>{const p=$('tts');p.style.display=p.style.display==='none'?'block':'none';ttsUI()};$('ttsClose').onclick=()=>$('tts').style.display='none';
+['ttsProv','ttsKey','ttsVoice'].forEach(id=>$(id).onchange=()=>{TTS.prov=$('ttsProv').value;TTS.key=$('ttsKey').value.trim();TTS.voice=$('ttsVoice').value.trim();ls.set('ttsProv',TTS.prov);ls.set('ttsKey',TTS.key);ls.set('ttsVoice',TTS.voice);ttsUI()});
+$('ttsTest').onclick=()=>say(line('lobby'));
+async function cloudAudio(text,rate){
+  const k=TTS.prov+'|'+TTS.voice+'|'+rate+'|'+text;if(AUDIO.has(k))return AUDIO.get(k);
+  let r;
+  if(TTS.prov==='openai')r=await fetch('https://api.openai.com/v1/audio/speech',{method:'POST',headers:{Authorization:'Bearer '+TTS.key,'Content-Type':'application/json'},body:JSON.stringify({model:'gpt-4o-mini-tts',voice:TTS.voice||'ash',input:text,response_format:'mp3',speed:rate,instructions:'Eres el Capitán Loro, un loro pirata sarcástico y burlón que narra un juego de trivia en un cumpleaños. Habla en español latinoamericano con acento chileno suave, tono teatral, irónico y con energía, ritmo ágil. Exagera un poco las emociones.'})});
+  else r=await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(TTS.voice||'pNInz6obpgDQGcFmaJgB')}?output_format=mp3_44100_128`,{method:'POST',headers:{'xi-api-key':TTS.key,'Content-Type':'application/json'},body:JSON.stringify({text,model_id:'eleven_multilingual_v2',voice_settings:{stability:.35,similarity_boost:.75,style:.6,speed:Math.min(1.2,Math.max(.7,rate))}})});
+  if(!r.ok)throw new Error('TTS '+r.status+' '+(await r.text()).slice(0,120));
+  const url=URL.createObjectURL(await r.blob());AUDIO.set(k,url);return url;
+}
 // say(texto, {then, rate, keep}) — encola; al terminar todo, dispara el "siguiente" pendiente o el auto-avance
 function say(text,o={}){if(!text){o.then&&o.then();return}queue.push({text,...o});if(!talking)nextLine()}
 function nextLine(){
   const it=queue.shift();if(!it){talking=false;$('parrot').classList.remove('talk');clearTimeout(bubbleT);bubbleT=setTimeout(()=>$('bubble').classList.remove('show'),3000);afterTalk();return}
   talking=true;updNext();const b=$('bubble');b.textContent=it.show||it.text;b.classList.add('show');$('parrot').classList.add('talk');
   let finished=false;const done=()=>{if(finished)return;finished=true;it.then&&it.then();setTimeout(nextLine,250)};
-  if(VOICE_ON&&synth){const u=new SpeechSynthesisUtterance(it.text);u.lang=VOICE?VOICE.lang:'es-ES';if(VOICE)u.voice=VOICE;u.rate=it.rate||1.05;u.pitch=/natural|neural|online/i.test(VOICE&&VOICE.name||'')?1.05:1.2;u.onend=done;u.onerror=done;synth.speak(u);setTimeout(done,Math.max(4000,it.text.length*110))}
+  if(VOICE_ON&&TTS.prov!=='browser'&&TTS.key){cloudAudio(it.text,it.rate||1.05).then(url=>{const a=new Audio(url);a.onended=done;a.onerror=done;a.play().catch(done)}).catch(e=>{console.warn(e);$('hint').style.display='block';$('hint').textContent='⚠️ La voz en la nube falló ('+e.message+'). Uso la voz del navegador.';browserSpeak(it,done)});setTimeout(done,Math.max(9000,it.text.length*150))}
+  else if(VOICE_ON&&synth)browserSpeak(it,done);
   else setTimeout(done,Math.min(7000,900+it.text.length*45));
 }
+function browserSpeak(it,done){if(!synth)return setTimeout(done,Math.min(7000,900+it.text.length*45));{const u=new SpeechSynthesisUtterance(it.text);u.lang=VOICE?VOICE.lang:'es-ES';if(VOICE)u.voice=VOICE;u.rate=it.rate||1.05;u.pitch=/natural|neural|online/i.test(VOICE&&VOICE.name||'')?1.05:1.2;u.onend=done;u.onerror=done;synth.speak(u);setTimeout(done,Math.max(4000,it.text.length*110))}}
 function hush(){queue=[];if(synth)synth.cancel();talking=false;$('parrot').classList.remove('talk')}
 function updNext(){const n=$('next');n.classList.toggle('waiting',talking);n.textContent=talking?(pendingNext?'⏳ El loro termina…':'🦜 Hablando…'):({lobby:'Zarpar ▶',question:'Cerrar ▶',mini:'Terminar ▶',end:'Fin'}[st&&st.stage]||'Siguiente ▶')}
 function afterTalk(){updNext();clearTimeout(autoT);if(pendingNext){pendingNext=false;return Game.next()}
@@ -206,7 +223,7 @@ function narrate(prev){
   if(st.stage==='lobby'){if(prev){const old=new Set(prev.crew.map(c=>c.id));const nu=st.crew.filter(c=>!old.has(c.id));if(nu.length&&queue.length<2)say(line('join',{name:nu[0].name,ani:''}))}return}
   if(first)return;
   if(st.stage==='intro'){if(st.phase===0)say(line('start'));return say(line('intro.'+st.phase))}
-  if(st.stage==='question'){const q=st.q;const pre=q.kind==='solo'&&q.d>=4?line('q.hard'):q.kind==='solo'&&q.d===1?line('q.easy'):line('q.'+q.kind);
+  if(st.stage==='question'){const q=st.q;if(q.kind==='trial')return say(line('q.trial',{name:q.accusedName,charge:q.charge}),{then:()=>{Game.arm();say(line('go'))}});const pre=q.kind==='solo'&&q.d>=4?line('q.hard'):q.kind==='solo'&&q.d===1?line('q.easy'):line('q.'+q.kind);
     return say(pre+' '+q.text,{show:pre,then:()=>{Game.arm();say(line('go'),{rate:1.15})}})}
   if(st.stage==='mini'){const m=st.mini;
     if(m.phase==='play'){const t=line('mini.'+m.type,{prompt:m.prompt||'',mode:MODE[m.mode]||''});
@@ -218,12 +235,15 @@ function narrate(prev){
     const r=st.result,pm=Object.fromEntries((prev.crew||[]).map(c=>[c.id,c.alive]));
     const fell=st.crew.filter(c=>pm[c.id]===true&&!c.alive),back=st.crew.filter(c=>pm[c.id]===false&&c.alive);
     let t='';const pick=a=>a[Math.floor(Math.random()*a.length)];
-    if(r.kind==='mini')t=(r.art?line('art')+' ':'')+line('miniEnd');
+    if(r.kind==='mini')t=(r.art?line('art')+' ':'')+line('miniEnd')+(fell.length?' '+line('miniFall',{name:fell[0].name}):'');
     else if(r.kind==='vote')t=line('vote');
+    else if(r.kind==='trial')t=fell.length?line('guilty'):line('innocent');
+    else if(r.kind==='council'&&!fell.length)t=/acertó/.test(r.lines.join(' '))?line('councilOk'):line('none');
+    else if(r.kind==='shop'&&/Sin mayoría/.test(r.title))t=line('noMajority');
     else if(r.kind==='shop')t=/guarda/.test(r.lines.join(' '))?line('save'):line('shop');
     else if(r.kind==='shield')t=st.crew.some(c=>c.immune)?line('shieldOk'):line('shieldNo');
-    else if(!fell.length&&!back.length&&['solo','group','splitQ'].includes(r.kind))t=line('none');
-    if(fell.length){const f=pick(fell);t+=' '+line(fell.length>=Math.max(3,prev.alive/2)?'many':'few',{n:fell.length,name:f.name,ani:''})}
+    else if(!fell.length&&!back.length&&['solo','group','splitQ','council'].includes(r.kind))t=line('none');
+    if(fell.length&&r.kind!=='trial'&&r.kind!=='mini'){const f=pick(fell);t+=' '+line(fell.length>=Math.max(3,prev.alive/2)?'many':'few',{n:fell.length,name:f.name,ani:''})}
     if(back.length)t+=' '+line('back',{name:pick(back).name});
     if(st.sunk)t+=' '+line('sunk');
     say(t.trim()||line('miniEnd'));
@@ -231,7 +251,7 @@ function narrate(prev){
 }
 
 // ---------- render ----------
-const KIND={solo:'Trivia individual',shield:'Escudo colectivo · 60%',shop:'Tienda del barco',group:'Respuesta de manada',split:'Elige tu bando',splitQ:'Desafío de bandos · 50%',vote:'Votación de la tripulación',revive:'Rescate · náufragos incluidos'};
+const KIND={solo:'Trivia individual',shield:'Escudo colectivo · 60%',shop:'Tienda del barco',group:'Respuesta de manada',split:'Elige tu bando',splitQ:'Desafío de bandos · 50%',vote:'Votación de la tripulación',revive:'Rescate · náufragos incluidos',council:'🗣️ Consejo · debatan en voz alta',trial:'⚖️ Juicio a bordo'};
 const MINI={draw:{ico:'🎨',name:'Galería del naufragio'},math:{ico:'🧮',name:'Cálculo bajo el agua'},dict:{ico:'📝',name:'El dictado del loro'},wario:{ico:'⚡',name:'Microjuegos relámpago'}};
 const WICO={tap:'👆',shake:'📳',tilt:'📱',stop:'🛑',avoid:'💣',swipe:'👉'};
 function render(prev){
@@ -245,7 +265,8 @@ function render(prev){
   const armed=st.q?st.q.armed:st.mini?st.mini.armed:false;
   const key=st.stage+'|'+st.phase+'|'+(st.q?st.q.id+armed:'')+'|'+(st.mini?st.mini.id+st.mini.phase+armed:'')+'|'+(st.result?JSON.stringify(st.result).length+st.result.title:'')+'|'+(st.stage==='lobby'?JSON.stringify(st.crew.map(c=>[c.name,c.g]))+JSON.stringify(st.groups.map(x=>x.name))+NET:'');
   if(key!==panelKey){panelKey=key;$('panel').innerHTML=panel();if(st.stage==='end'&&!st.sunk&&g.have>=g.need)confetti();bindLobby()}
-  if(st.q){const m=$('meta');if(m)m.textContent=st.q.armed?`Respondieron ${st.q.answered} de ${st.q.eligible}`:'🦜 El loro está leyendo la pregunta…'}
+  if(st.q){const m=$('meta');if(m)m.textContent=st.q.armed?(st.q.kind==='council'?`Votos: ${st.q.answered} · pueden cambiar su voto hasta que termine el tiempo`:`Respondieron ${st.q.answered} de ${st.q.eligible}`):'🦜 El loro está leyendo…';
+    const d=$('dist');if(d&&st.q.dist){const tot=Math.max(1,st.q.dist.reduce((a,b)=>a+b,0));d.innerHTML=st.q.dist.map((n,i)=>`<div style="display:flex;align-items:center;gap:10px;margin:4px 0;font-weight:800"><span style="width:${st.q.kind==='trial'?130:40}px">${st.q.kind==='trial'?esc(st.q.opts[i]):'ABCD'[i]}</span><div style="flex:1;background:#f0dcb4;border-radius:8px;height:22px;overflow:hidden"><div class="o${i%4}" style="height:100%;width:${n/tot*100}%;transition:width .5s"></div></div><span style="width:30px">${n}</span></div>`).join('')}}
   if(st.mini){const m=$('meta');if(m)m.textContent=st.mini.phase==='vote'?`Votaron ${st.mini.sent} de ${st.mini.voters}`:(st.mini.armed?`Enviaron ${st.mini.sent}`:'🦜 Escuchen las instrucciones…')}
   narrate(prev);updNext();
 }
@@ -259,7 +280,7 @@ function panel(){
   if(st.stage==='intro')return `<div class="card intro pop"><div class="num">ISLA ${st.phase+1} DE 10 · ${ISLES[st.phase]}</div><h1 class="title">${esc(st.phaseName)}</h1><p>${esc(st.desc)}</p><p style="margin-top:14px;font-weight:800;opacity:.6">${st.steps} desafíos en esta isla</p></div>`;
   if(st.stage==='question'){const q=st.q;
     return `<div class="card slide"><div class="qtop"><div><span class="tag">${KIND[q.kind]||''}</span>${q.d?`<span class="stars">${'★'.repeat(q.d)}${'☆'.repeat(5-q.d)}</span>`:''}<span style="margin-left:10px;font-weight:800;opacity:.6">Desafío ${Math.max(1,st.step)} de ${st.steps}</span><div class="qtext title">${esc(q.text)}</div></div>${timer(q.armed,q.left/1000)}</div>
-     <div class="opts">${q.opts.map((o,i)=>`<div class="opt o${i%4} ${(q.hide||[]).includes(i)?'dim':''}"><b>${'ABCD'[i]}</b>${esc(o)}</div>`).join('')}</div><div class="meta" id="meta"></div></div>`}
+     ${q.kind==='trial'?`<div style="font-size:24px;font-weight:800">🎤 ${esc(q.accusedName)}, ¡defiéndete en voz alta! El resto vota en su celular.</div>`:`<div class="opts">${q.opts.map((o,i)=>`<div class="opt o${i%4} ${(q.hide||[]).includes(i)?'dim':''}"><b>${'ABCD'[i]}</b>${esc(o)}</div>`).join('')}</div>`}${q.kind==='council'?'<div style="font-size:22px;font-weight:800;margin-top:10px">🗣️ ¡Debatan entre todos! Cuenta la respuesta de la mayoría del barco; si se equivocan, caen quienes votaron mal.</div>':''}${q.dist?'<div id="dist" style="margin-top:12px"></div>':''}<div class="meta" id="meta"></div></div>`}
   if(st.stage==='mini'){const m=st.mini,M=MINI[m.type];
     if(m.phase==='vote')return `<div class="card pop"><div class="minihead"><span class="ico">🗳️</span><div><div class="title" style="font-size:36px">Voten el ${MODE[m.mode]} dibujo</div><div style="font-weight:800;opacity:.7">«${esc(m.prompt)}» · Los de a bordo votan en su celular</div></div><div style="margin-left:auto">${timer(true,m.left/1000)}</div></div><div class="gallery">${(m.arts||[]).map((a,i)=>`<figure style="animation-delay:${i*.07}s"><img src="${a.img}"><figcaption>#${i+1}</figcaption></figure>`).join('')}</div><div class="meta" id="meta"></div></div>`;
     const how={draw:`Los náufragos dibujan en su celular: <b>«${esc(m.prompt)}»</b>. Luego los de a bordo votan el <b>${MODE[m.mode]}</b> dibujo, y su autor vuelve al barco.`,
@@ -276,7 +297,7 @@ function panel(){
     return `<div class="card pop">${r.opts&&r.correct>=0?`<div class="opts" style="margin-bottom:16px">${r.opts.map((o,i)=>`<div class="opt o${i%4} ${i===r.correct?'win':'dim'}"><b>${'ABCD'[i]}</b>${esc(o)}</div>`).join('')}</div>`:''}
      <div class="rtitle title">${esc(r.title)}</div>${r.lines.map((l,i)=>`<div class="line" style="animation-delay:${.3+i*.25}s">${esc(l)}</div>`).join('')}${r.events.map((l,i)=>`<div class="ev" style="animation-delay:${.6+(r.lines.length+i)*.3}s">${esc(l)}</div>`).join('')}</div>`}
   if(st.stage==='end'){const win=!st.sunk&&st.goal.have>=st.goal.need;
-    return `<div class="card end pop"><h1 class="title">${win?'🎉 ¡Llegamos a puerto!':'🌊 El arca se hundió'}</h1><p style="text-align:center;font-size:26px;font-weight:800">${st.goal.have} de ${st.total} a bordo · meta ${st.goal.need} · pozo ${st.pool}</p><div style="text-align:center;font-weight:800;opacity:.7">Quienes más aportaron a la tripulación</div><div class="mvp">${st.mvps.map(m=>`<div><span>${m.ani||'🐾'}</span>${esc(m.name)}<br>${m.hits} ${m.hits===1?'acierto':'aciertos'}</div>`).join('')}</div></div>`}
+    return `<div class="card end pop"><h1 class="title">${win?'🎉 ¡Llegamos a puerto!':'🌊 El barco se hundió'}</h1><p style="text-align:center;font-size:26px;font-weight:800">${st.goal.have} de ${st.total} a bordo · meta ${st.goal.need} · pozo ${st.pool}</p><div style="text-align:center;font-weight:800;opacity:.7">Quienes más aportaron a la tripulación</div><div class="mvp">${st.mvps.map(m=>`<div><span>${m.ani||'🐾'}</span>${esc(m.name)}<br>${m.hits} ${m.hits===1?'acierto':'aciertos'}</div>`).join('')}</div></div>`}
   return '';
 }
 function bindLobby(){const sg=$('sg');if(sg)sg.onclick=()=>Game.setGroups($('gr').value.split('\n').map(x=>x.trim()).filter(Boolean));const sh=$('shf');if(sh)sh.onclick=()=>Game.shuffleGroups()}

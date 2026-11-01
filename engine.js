@@ -9,15 +9,17 @@ const GOAL = 0.4;       // meta colectiva: terminar con al menos el 40% del equi
 const PHASES = [
   { name: 'Zarpe', desc: 'Calentamos motores. Respondes solo; si fallas, caes al agua.', steps: [['solo', 1], ['solo', 1], ['solo', 1], ['solo', 2]] },
   { name: 'Isla del Escudo', desc: 'Si el 60% del barco acierta, todos quedan protegidos. Y al final, un minijuego relámpago.', steps: [['shield', 2], ['solo', 2], ['solo', 2], ['mini', 'wario']] },
-  { name: 'Isla del Dilema', desc: 'La tripulación vota y la mayoría decide. Luego, a responder.', steps: [['vote'], ['solo', 2], ['solo', 2], ['solo', 3]] },
+  { name: 'Isla del Dilema', desc: 'La tripulación vota, juzga a un sospechoso y responde.', steps: [['vote'], ['solo', 2], ['trial'], ['solo', 2], ['solo', 3]] },
   { name: 'La Tormenta', desc: 'Sube la dificultad y el oleaje. Cierra con cálculo mental bajo la lluvia.', steps: [['solo', 3], ['solo', 3], ['solo', 3], ['solo', 3], ['mini', 'math']] },
-  { name: 'Isla de los Bandos', desc: 'El barco se divide en dos. Cada bando debe acertar al menos el 50% o pierde a quienes fallaron.', steps: [['split', 3], ['splitQ', 3], ['splitQ', 3], ['solo', 3]] },
+  { name: 'Isla de los Bandos', desc: 'El barco se divide en dos, y luego todos debaten una pregunta en el Consejo.', steps: [['split', 3], ['splitQ', 3], ['splitQ', 3], ['council', 3]] },
   { name: 'Bahía del Rescate', desc: 'Los náufragos dibujan, escriben y responden para volver a bordo.', steps: [['mini', 'draw'], ['revive', 3], ['solo', 3], ['mini', 'dict']] },
-  { name: 'Isla de las Manadas', desc: 'Cuenta la respuesta de la mayoría de tu grupo. Si el grupo acierta, todos se salvan.', steps: [['group', 4], ['group', 4], ['group', 4], ['mini', 'wario']] },
+  { name: 'Isla de las Manadas', desc: 'Cuenta la respuesta de la mayoría de tu grupo. Y alguien será juzgado.', steps: [['group', 4], ['group', 4], ['trial'], ['group', 4], ['mini', 'wario']] },
   { name: 'Mar de la Presión', desc: 'Escudo colectivo, preguntas difíciles y matemática con nervios.', steps: [['shield', 4], ['solo', 4], ['solo', 4], ['mini', 'math']] },
-  { name: 'El Último Faro', desc: 'Un dilema, una galería de arte y la última oportunidad de rescatar náufragos.', steps: [['vote'], ['mini', 'draw'], ['revive', 3], ['solo', 4]] },
-  { name: 'Puerto Final', desc: 'Nivel máximo. Lleguen a puerto con al menos el 40% de la tripulación.', steps: [['group', 5], ['solo', 5], ['solo', 5], ['solo', 5]] },
+  { name: 'El Último Faro', desc: 'Un dilema, una galería de arte, un Consejo y la última oportunidad de rescatar náufragos.', steps: [['vote'], ['mini', 'draw'], ['council', 4], ['revive', 3], ['solo', 4]] },
+  { name: 'Puerto Final', desc: 'Nivel máximo. Debatan juntos y lleguen a puerto con al menos el 40% de la tripulación.', steps: [['council', 5], ['group', 5], ['solo', 5], ['solo', 5], ['solo', 5]] },
 ];
+const CHARGES = ['se comió la torta del capitán', 'escondió los salvavidas', 'le puso sal al agua dulce', 'robó las galletas del loro', 'hizo un hoyo en el barco "para ver peces"', 'usó la vela como toalla', 'le dijo al tiburón dónde estábamos', 'roncó toda la noche y asustó a las ballenas', 'cambió el rumbo para ir a buscar completos', 'tiró el mapa al agua por accidente', 'se sentó en el pulpo', 'organizó un karaoke durante la tormenta'];
+const TIMES = { trial: 35, council: 45 };
 
 const DRAW_PROMPTS = ['El Capitán Loro en traje de baño', 'Una jirafa dentro de un submarino', 'El cumpleañero como superhéroe', 'Un tiburón vegetariano', 'Una vaca surfeando', 'El barco hundiéndose con estilo', 'Un pulpo haciendo malabares', 'Una rata pirata con parche', 'Un elefante en una tina', 'La torta de cumpleaños más fea del mundo', 'Un pingüino en la playa con calor', 'Un gato que odia el agua... en el agua', 'Un delfín con lentes de sol', 'Una cebra sin rayas', 'El loro dormido en el mástil', 'Una sirena que es mitad perro'];
 const DICTATIONS = ['El loro capitán navega sin brújula y sin vergüenza', 'Una jirafa mareada vomitó sobre la cubierta', 'Los tiburones esperan pacientemente su almuerzo', 'Hoy celebramos un cumpleaños en medio del océano', 'El pulpo robó tres galletas y dos salvavidas', 'Nadie sabe nadar pero todos quieren torta', 'La tormenta se llevó el sombrero del capitán', 'El elefante pidió un bote más grande', 'Un pingüino elegante bailaba en la proa', 'Las olas gigantes no asustan a la tripulación'];
@@ -44,7 +46,7 @@ const award = (n, d) => { G.pool += n * d * (G.mods.double ? 2 : 1); };
 
 function reset() {
   clearTimeout(G && G.timer);
-  G = { stage: 'lobby', phase: -1, queue: [], cur: null, answers: {}, lastAnswers: {}, deadline: 0, result: null, mods: {}, pool: 0, used: new Set(), emergCount: 0, usedSplit: new Set(), usedDraw: new Set(), usedDict: new Set(), mini: null, sunk: false, lightning: false, armed: false, usedDil: new Set(), emergency: false, sides: null, groups: (G && G.groups) || ['🔴 Rojo', '🔵 Azul', '🟢 Verde', '🟡 Amarillo'] };
+  G = { stage: 'lobby', phase: -1, queue: [], cur: null, answers: {}, lastAnswers: {}, deadline: 0, result: null, mods: {}, pool: 0, used: new Set(), emergCount: 0, usedSplit: new Set(), usedDraw: new Set(), usedCharge: new Set(), usedDict: new Set(), mini: null, sunk: false, lightning: false, armed: false, usedDil: new Set(), emergency: false, sides: null, groups: (G && G.groups) || ['🔴 Rojo', '🔵 Azul', '🟢 Verde', '🟡 Amarillo'] };
   for (const p of list()) Object.assign(p, { alive: true, immune: false, fifty: false, hinted: false, hide: [], side: null, hits: 0 });
 }
 
@@ -95,8 +97,8 @@ function open(kind, q, who, extra = {}) {
 }
 function arm(id) {
   if (G.stage === 'question' && G.cur && G.cur.id === id && !G.armed) {
-    clearTimeout(G.timer); G.armed = true; G.deadline = Date.now() + TIME * 1000;
-    G.timer = setTimeout(() => { if (G.cur && G.cur.id === id) resolve(); }, TIME * 1000 + 400); push();
+    clearTimeout(G.timer); G.armed = true; const T = (TIMES[G.cur.kind] || TIME) * 1000; G.deadline = Date.now() + T;
+    G.timer = setTimeout(() => { if (G.cur && G.cur.id === id) resolve(); }, T + 400); push();
   }
   if (G.stage === 'mini' && G.mini && G.mini.id === id && !G.mini.armed) {
     clearTimeout(G.timer); const m = G.mini; m.armed = true; m.deadline = Date.now() + m.dur * 1000;
@@ -151,6 +153,16 @@ function resolveMini(id) {
     const k = Math.max(1, Math.floor(dead().length / 4));
     const back = deadR.slice(0, k).map(t => P[t]); back.forEach(p => p.alive = true);
     if (back.length) events.push('🛟 Mejores náufragos, de vuelta a bordo: ' + names(back));
+    // castigo: los peores de a bordo (o quienes no jugaron) caen al agua
+    const onBoard = alive().filter(p => !back.includes(p) && p.conn);
+    if (onBoard.length >= 2) {
+      const sc = p => score[p.token] || 0, worst = Math.min(...onBoard.map(sc));
+      const losers = shuffle(onBoard.filter(p => sc(p) === worst)).slice(0, Math.max(1, Math.floor(onBoard.length / 6)));
+      if (worst < Math.max(...onBoard.map(sc)) || worst === 0) {
+        const fell = []; losers.forEach(p => { kill(p, lines); if (!p.alive) fell.push(p); });
+        if (fell.length) events.push('🌊 Peor puntaje a bordo, ¡al agua!: ' + names(fell));
+      }
+    }
     const nPow = alive().length > 12 ? 2 : 1;
     aliveR.filter(t => !back.includes(P[t])).slice(0, nPow).forEach(t => events.push(`🎁 ${P[t].name} gana ${givePower(P[t])}`));
     if (!ranked.length || !score[ranked[0]]) lines.push('Nadie sumó puntos. Impresionante, en el mal sentido.');
@@ -181,6 +193,12 @@ function runStep() {
     return open(k, pickQ(d), 'all');
   }
   if (k === 'mini') return openMini(d);
+  if (k === 'council') return open('council', pickQ(d), 'alive');
+  if (k === 'trial') {
+    const cands = alive().filter(p => !p.immune); if (alive().length < 3 || !cands.length) return runStep();
+    const acc = rnd(cands), charge = CHARGES[pickFrom(CHARGES, G.usedCharge)];
+    return open('trial', { text: `⚖️ ${acc.name} está acusado de que ${charge}. ¿Qué dice la tripulación?`, opts: ['😇 Inocente', '😈 Culpable'], correct: -1 }, 'alive', { accused: acc.token, accusedName: acc.name, charge });
+  }
   if (k === 'split') { const sp = BANK.splits[pickFrom(BANK.splits, G.usedSplit)]; return open('split', { text: sp.q, opts: sp.o, correct: -1 }, 'alive'); }
   if (k === 'vote') { const i = pickFrom(DILEMMAS, G.usedDil); return open('vote', { text: DILEMMAS[i].q, opts: DILEMMAS[i].o, correct: -1 }, 'alive', { dil: i }); }
   if (k === 'shop') {
@@ -213,7 +231,7 @@ function resolve() {
   clearTimeout(G.timer);
   const c = G.cur, A = G.answers, lines = [], events = [];
   const ans = p => A[p.token], ok = p => ans(p) && ans(p).i === c.correct;
-  const total = list().length, lethal = ['solo', 'group', 'splitQ'].includes(c.kind);
+  const total = list().length, lethal = ['solo', 'group', 'splitQ', 'council', 'trial'].includes(c.kind);
   let title = '';
   if (c.correct >= 0) list().filter(ok).forEach(p => p.hits++);
 
@@ -267,16 +285,30 @@ function resolve() {
     back.forEach(p => p.alive = true);
     title = '🔁 Rescate';
     lines.push(`${okA.length} a bordo acertaron → ${n} salvavidas`, `${okD.length} náufragos acertaron`, back.length ? 'Vuelven: ' + names(back) : 'Nadie vuelve esta vez');
+  } else if (c.kind === 'council') {
+    const voters = alive(), { w, cnt } = majority(c, voters);
+    title = '🗣️ El Consejo decidió';
+    lines.push(`La tripulación eligió "${c.opts[w]}" (${cnt[w]} de ${voters.length})`);
+    if (w === c.correct) { award(voters.length, c.d); lines.push('✅ ¡El Consejo acertó! Todos a salvo.'); }
+    else { const bad = voters.filter(p => !ok(p)); bad.forEach(p => kill(p, lines)); const out = bad.filter(p => !p.alive); lines.push('❌ El Consejo se equivocó' + (out.length ? ` — al agua quienes votaron mal: ${names(out)}` : '')); award(voters.filter(ok).length, 1); }
+  } else if (c.kind === 'trial') {
+    const acc = P[c.accused], voters = alive().filter(p => p.token !== c.accused);
+    const guilty = voters.filter(p => ans(p) && ans(p).i === 1).length, need = Math.floor(voters.length / 2) + 1;
+    title = '⚖️ Veredicto';
+    lines.push(`Culpable: ${guilty} · Inocente: ${voters.filter(p => ans(p) && ans(p).i === 0).length}`);
+    if (acc && guilty >= need) { if (acc.alive) { kill(acc, lines); } G.pool += 10; lines.push(acc.alive ? `${acc.name} fue declarado culpable, pero su escudo lo salvó.` : `😈 ${acc.name} es CULPABLE: ¡a la plancha! El capitán premia la justicia con +10 al pozo.`); }
+    else if (acc) { acc.immune = true; lines.push(`😇 ${acc.name} es inocente. Como disculpa recibe un escudo personal.`); }
   } else if (c.kind === 'vote') {
     const { w, cnt } = majority(c, alive());
     title = '🗳️ El equipo decidió';
     lines.push(`"${c.opts[w]}" (${cnt[w]} de ${alive().length} votos)`);
     G.mods = {}; const msg = DILEMMAS[c.dil].fx[w](); if (msg) lines.push(msg);
   } else if (c.kind === 'shop') {
-    const { w, cnt } = majority(c, alive());
+    const { w, cnt } = majority(c, alive()), need = Math.floor(alive().length / 2) + 1;
     title = '🛒 El equipo decidió';
-    lines.push(`"${c.opts[w]}" (${cnt[w]} votos)`);
-    if (w < c.items.length) { const it = SHOP[c.items[w]]; G.pool -= it.c; G.mods = {}; lines.push(it.fx()); }
+    if (cnt[w] < need) { title = '🛒 Sin mayoría'; lines.push(`La opción más votada tuvo ${cnt[w]} de ${alive().length} votos; se necesitaban ${need}.`, `No se compra nada. El pozo queda en ${G.pool} pts.`); }
+    else lines.push(`"${c.opts[w]}" (${cnt[w]} de ${alive().length} votos)`);
+    if (cnt[w] < need) {} else if (w < c.items.length) { const it = SHOP[c.items[w]]; G.pool -= it.c; G.mods = {}; lines.push(it.fx()); }
     else lines.push(`El pozo se guarda: ${G.pool} pts`);
   }
 
@@ -311,7 +343,7 @@ function hview() {
   if (G.stage === 'question' && c) {
     const { correct, items, ...rest } = c;
     const el = c.who === 'all' ? list() : alive();
-    q = { ...rest, armed: G.armed, left: G.armed ? G.deadline - Date.now() : TIME * 1000, answered: Object.keys(G.answers).length, eligible: el.length, hide: list()[0] ? list()[0].hide : [] };
+    q = { ...rest, time: TIMES[c.kind] || TIME, dist: ['council', 'trial'].includes(c.kind) ? c.opts.map((_, i) => Object.values(G.answers).filter(a => a.i === i).length) : null, armed: G.armed, left: G.armed ? G.deadline - Date.now() : (TIMES[c.kind] || TIME) * 1000, answered: Object.keys(G.answers).length, eligible: el.length, hide: list()[0] ? list()[0].hide : [] };
   }
   return {
     ...phaseInfo(), phases: PHASES.map(p => p.name),  total: list().length, alive: alive().length,
@@ -324,7 +356,7 @@ function hview() {
 function pview(p) {
   const c = G.cur;
   const s = { ...phaseInfo(), me: { name: p.name, ani: p.ani, group: G.groups[p.group] || null, gi: p.group, alive: p.alive, immune: p.immune, fifty: !!p.fifty }, groups: G.groups.map((g, i) => ({ name: g, n: list().filter(x => x.group === i).length })) };
-  if (G.stage === 'question' && c) s.q = { kind: c.kind, text: c.text, opts: c.opts, armed: G.armed, hinted: !!p.hinted, left: G.armed ? G.deadline - Date.now() : TIME * 1000, can: c.who === 'all' || p.alive, mine: G.answers[p.token] ? G.answers[p.token].i : null, hide: p.hide || [], side: c.kind === 'splitQ' && G.sides ? G.sides[p.side] : null };
+  if (G.stage === 'question' && c) s.q = { kind: c.kind, text: c.text, opts: c.opts, accused: c.accused === p.token, dist: ['council', 'trial'].includes(c.kind) ? c.opts.map((_, i) => Object.values(G.answers).filter(a => a.i === i).length) : null, armed: G.armed, hinted: !!p.hinted, left: G.armed ? G.deadline - Date.now() : (TIMES[c.kind] || TIME) * 1000, can: (c.who === 'all' || p.alive) && c.accused !== p.token, mine: G.answers[p.token] ? G.answers[p.token].i : null, hide: p.hide || [], side: c.kind === 'splitQ' && G.sides ? G.sides[p.side] : null };
   if (G.stage === 'reveal' && G.result) { const a = G.lastAnswers[p.token]; s.result = { ...G.result, mine: a ? a.i : null }; }
   if (G.stage === 'mini' && G.mini) s.mini = miniView(p);
   if (G.stage === 'end') s.mvps = mvps();
@@ -384,11 +416,11 @@ const Game = {
     }
     if (m.type === 'answer') {
       const c = G.cur, i = m.i;
-      if (G.stage !== 'question' || !c || (c.who !== 'all' && !p.alive) || G.answers[p.token]) return;
+      if (G.stage !== 'question' || !c || (c.who !== 'all' && !p.alive) || c.accused === p.token || (G.answers[p.token] && c.kind !== 'council')) return;
       if (typeof i !== 'number' || i < 0 || i >= c.opts.length || (p.hide || []).includes(i)) return;
       G.answers[p.token] = { i, t: Date.now() };
-      const el = (c.who === 'all' ? list() : alive()).length, id = c.id;
-      if (Object.keys(G.answers).length >= el) setTimeout(() => { if (G.cur && G.cur.id === id) resolve(); }, 800);
+      const el = (c.who === 'all' ? list() : alive()).length - (c.accused ? 1 : 0), id = c.id;
+      if (Object.keys(G.answers).length >= el && c.kind !== 'council') setTimeout(() => { if (G.cur && G.cur.id === id) resolve(); }, 800);
       push();
     }
   },

@@ -2,7 +2,7 @@
 // Agrega líneas libremente: el narrador elige al azar y evita repetir las últimas.
 const LINES = {
   lobby: [
-    'Bienvenidos a bordo del Arca. Yo soy el Capitán Loro, y no, no hay chalecos para todos.',
+    'Bienvenidos a bordo de A La Deriva. Yo soy el Capitán Loro, y no, no hay chalecos para todos.',
     'Suban, suban. El barco es seguro. Creo. Nunca lo he probado con tanta gente.',
     'Escaneen el código y elijan su manada. Los que no elijan, los elijo yo, y tengo pésimo criterio.',
     'Tripulación, recuerden: si hay que abandonar el barco, el loro sale primero. Tengo alas.',
@@ -31,6 +31,8 @@ const LINES = {
     group: ['Ahora cuenta lo que diga tu manada. Elijan bien a quién seguir.', 'Respuesta grupal. Que el más sabio guíe. Si hay alguno.', 'Manada, respondan juntos. O al menos parecido.', 'Aquí cuenta la mayoría del grupo. Así que sí, la culpa es compartida.'],
     split: ['Elijan bando. No hay respuesta correcta, solo consecuencias.', 'Divídanse. Esto va a doler a la amistad.', 'Elijan con el corazón. El cerebro lo van a necesitar después.'],
     splitQ: ['Cada bando necesita la mitad de aciertos. Sin presión.', 'Bandos, a defender su honor. Lo poco que queda.', 'El bando que falle, pierde gente. Así de simple, así de cruel.'],
+    trial: ['¡Juicio a bordo! {name} está acusado de que {charge}. {name}, tienes treinta segundos para defenderte en voz alta. Los demás, voten culpable o inocente.', 'Orden en la sala. Se acusa a {name} de que {charge}. Que hable el acusado, y que la tripulación decida.', 'Tenemos un sospechoso: {name}. Dicen que {charge}. Defiéndete, {name}, porque la tripulación tiene hambre de justicia.'],
+    council: ['¡Consejo del barco! Debatan en voz alta. Cuenta lo que vote la mayoría, y pueden cambiar su voto hasta el final.', 'Hora del Consejo. Discutan, peleen, convenzan. Los que voten mal y pierdan, al agua.', 'Consejo de la tripulación. Cuarenta y cinco segundos para ponerse de acuerdo. Suerte con eso.'],
     revive: ['Náufragos, esta es su oportunidad. Los de arriba, no los dejen colgando.', 'Pregunta de rescate. Los de abajo también responden. Remojados, pero responden.', 'Cada cuatro aciertos a bordo, lanzo un salvavidas. Hagan cuentas.'],
     vote: ['Votación. La democracia: el arte de equivocarse todos juntos.', 'Hora de votar. Recuerden, después no se quejen.', 'Decidan ustedes. Yo solo manejo el barco. Mal, pero lo manejo.'],
     shop: ['Hora de gastar el pozo. Nada de comprar maní, por favor.', 'La tienda está abierta. Gasten con cabeza. Si tienen.', 'Pozo común, decisión común. Elijan antes de que lo gaste yo en galletas.'],
@@ -47,6 +49,11 @@ const LINES = {
   few: ['{n} al agua. Los tiburones les mandan saludos.', 'Adiós, {name}. Nadie te va a extrañar... bueno, un poco.', '{name} decidió darse un chapuzón. Valiente o ignorante.', 'Al agua {name}. Por lo menos el agua está tibia. Mentira.', '{name}, el {ani} más mojado del océano.', 'Perdimos a {name}. Que en paz nade.', '{name} cayó. Alguien tírele una galleta.', 'Chao {name}. Te guardo un pedazo de torta. Mojado.'],
   many: ['Eso fue un naufragio en toda regla.', '¡Hombre al agua! Y mujer. Y jirafa. Y básicamente todos.', 'Perdimos a {n}. Voy a necesitar un barco más chico.', '{n} al agua de una sola vez. Récord personal de la tripulación.', 'Eso no fue una pregunta, fue una masacre acuática.', 'Se cayeron {n}. El barco ahora flota mejor, eso sí.'],
   back: ['{name} vuelve a bordo, empapado y con dignidad cero.', 'Miren quién volvió. Seca tus patas antes de entrar, {name}.', '{name} regresa del más allá. Huele a pescado, pero regresa.', 'Bienvenido de vuelta, {name}. No te acostumbres.', '{name} está de vuelta. Los tiburones lloran.'],
+  noMajority: ['Sin mayoría no hay compra. La democracia, otra vez, decepcionando.', 'Cada uno votó por lo suyo. Felicitaciones, no compraron nada.', 'Ni para ponerse de acuerdo sirven. El pozo se queda donde está.'],
+  guilty: ['Culpable. A la plancha, sin derecho a pataleo.', 'La tripulación ha hablado: al agua con el criminal.', 'Culpable. Que los tiburones decidan si apelar.'],
+  innocent: ['Inocente. Aunque yo sigo sospechando.', 'Absuelto. Pero te estaré vigilando.', 'Inocente. La justicia es ciega, y a veces también sorda.'],
+  councilOk: ['El Consejo acertó. Pensar juntos funciona, ¿quién lo diría?', 'Debate exitoso. Por una vez, la mayoría tenía razón.'],
+  miniFall: ['Y el peor de a bordo, {name}, se va al agua por flojo.', 'Por cierto, {name}, último lugar. Al agua.', '{name} jugó tan mal que el barco lo expulsó solo.'],
   vote: ['La democracia ha hablado. Yo no me hago responsable.', 'Decisión tomada. Espero que sepan lo que hicieron.', 'Votaron. Ahora vivan con las consecuencias.', 'Interesante elección. Equivocada, pero interesante.'],
   shieldOk: ['Escudo activado. Por una vez, trabajaron juntos.', 'Lo lograron. Están protegidos. Disfrútenlo, dura poco.', 'Escudo arriba. Estoy casi orgulloso.'],
   shieldNo: ['Sin escudo. El trabajo en equipo les queda grande.', 'No llegaron. El escudo se fue a la basura, como sus respuestas.', 'Sin protección. Que el mar tenga piedad.'],
@@ -54,9 +61,9 @@ const LINES = {
   save: ['Ahorraron. Muy responsables. Muy aburridos.', 'Guardan el pozo. ¿Para qué? ¿Para su funeral?', 'Ahorro total. El banco del loro les agradece.'],
   miniEnd: ['Terminó el minijuego. Algunos brillaron. Otros, bueno, participaron.', 'Se acabó. Qué talento. Escaso, pero talento.', 'Fin del desafío. Veamos quién se salva.'],
   art: ['Qué obra maestra. O qué crimen. Depende de quién mire.', 'Esto debería estar en un museo. Del horror.', 'Picasso estaría orgulloso. O asustado.'],
-  sunk: ['No queda nadie a bordo. El arca se hunde. Fue un honor. Mentira, fue un desastre.'],
+  sunk: ['No queda nadie a bordo. El barco se hunde. Fue un honor. Mentira, fue un desastre.'],
   win: ['¡Llegamos a puerto! Contra todo pronóstico, especialmente el mío. ¡Feliz cumpleaños!', '¡Puerto a la vista! Lo lograron. Hay torta para todos. Bueno, para los vivos.', '¡Victoria! Nunca dudé de ustedes. Bueno, dudé todo el rato.'],
-  lose: ['El arca se hundió. Pero miren el lado bueno: nadie va a recordar esto. Excepto yo.', 'No llegamos. El puerto queda para otro cumpleaños.', 'Naufragio total. Igual hay torta. Mojada, pero hay.'],
+  lose: ['El barco se hundió. Pero miren el lado bueno: nadie va a recordar esto. Excepto yo.', 'No llegamos. El puerto queda para otro cumpleaños.', 'Naufragio total. Igual hay torta. Mojada, pero hay.'],
   idle: ['¿Siguen ahí? El barco no avanza solo.', 'Capitán esperando órdenes. Y galletas.', 'Cuando quieran, eh. El océano tiene todo el día. Yo no.'],
 };
 const _recent = [];

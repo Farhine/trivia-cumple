@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
-<title>Jugar</title>
+<title>A La Deriva</title>
 <link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@600;800&display=swap" rel="stylesheet">
 <style>
 :root{--card:#fff4dc;--ink:#3a2412;--mut:#8a6a4a;--acc:#ff5d8f;--ok:#1f9e6a;--bad:#d64545;--gold:#e0a100}
@@ -74,9 +74,20 @@ function send(o){if(conn&&conn.open)conn.send(o)}
 const s={emit:(t,a)=>{if(t==='group')send({type:'group',gi:a});if(t==='answer')send({type:'answer',i:a})}};
 const esc=t=>String(t??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 function join(name){pendingName=name;if(conn&&conn.open)conn.send({type:'join',token,name});else connect()}
-const KIND={solo:'Trivia individual',shield:'🛡️ Escudo colectivo',shop:'🛒 Votación de compra',group:'👥 Respuesta grupal',split:'⚔️ Elige tu bando',splitQ:'⚔️ Desafío de bandos',vote:'🗳️ Votación del equipo',revive:'🔁 Rescate'};
+const KIND={solo:'Trivia individual',shield:'🛡️ Escudo colectivo',shop:'🛒 Votación de compra',group:'👥 Respuesta grupal',split:'⚔️ Elige tu bando',splitQ:'⚔️ Desafío de bandos',vote:'🗳️ Votación del equipo',revive:'🔁 Rescate',council:'🗣️ Consejo del barco',trial:'⚖️ Juicio a bordo'};
 const MININAME={draw:'🎨 Galería del naufragio',math:'🧮 Cálculo bajo el agua',dict:'📝 El dictado del loro',wario:'⚡ Microjuegos relámpago'};
 let MG=null; // minijuego activo {key, cleanup}
+let PRACTICE=false;
+function startPractice(){
+  PRACTICE=true;if(MG&&MG.cleanup)MG.cleanup();MG={key:'practice'};
+  app.innerHTML=`<div class="card"><h2>🧪 Práctica</h2><p>Prueba los 6 microjuegos. No cuenta para el juego.</p><div id="sensInfo"></div><button class="pri" id="pgo">▶ Empezar práctica</button><button id="pout">← Volver al lobby</button></div><div id="mg"></div>`;
+  const need=typeof DeviceOrientationEvent!=='undefined'&&typeof DeviceOrientationEvent.requestPermission==='function';
+  const info=()=>{document.getElementById('sensInfo').innerHTML=`<p style="font-weight:800">Giroscopio: ${SENS.orient?'✅ funciona':'❔ sin datos todavía'} · Movimiento: ${SENS.motion?'✅ funciona':'❔ sin datos todavía'}</p>${need&&!SENS.asked?'<button class="pri" id="sens2">Activar sensores (iPhone)</button>':''}${location.protocol!=='https:'&&location.hostname!=='localhost'?'<p style="color:var(--bad)">⚠️ Los sensores solo funcionan desde la página https (GitHub Pages).</p>':''}`;
+    const b=document.getElementById('sens2');if(b)b.onclick=async()=>{SENS.asked=true;try{await DeviceOrientationEvent.requestPermission()}catch(e){}try{await DeviceMotionEvent.requestPermission()}catch(e){}setTimeout(info,500)}};
+  info();const iv=setInterval(info,1500);
+  document.getElementById('pout').onclick=()=>{clearInterval(iv);if(MG&&MG.cleanup)MG.cleanup();MG=null;PRACTICE=false;render()};
+  document.getElementById('pgo').onclick=()=>{const box=document.getElementById('mg');deadline=Date.now()+40000;mgWario(box,{id:-1,games:['tap','shake','tilt','stop','avoid','swipe'],practice:true});box.scrollIntoView({behavior:'smooth'})};
+}
 function header(){
   const m=st.me;document.body.classList.toggle('dead',!m.alive&&st.stage!=='lobby');
   let h=`<div class="me"><span class="big">${m.ani||'🐾'}</span><div><div class="title" style="font-size:24px">${esc(m.name)}</div><div style="font-weight:800;color:${m.alive?'var(--ok)':'var(--bad)'}">${m.alive?'⛵ A bordo':'🛟 En el agua'}${m.group?' · '+esc(m.group):''}</div></div></div>`;
@@ -88,30 +99,36 @@ function header(){
   return h;
 }
 function render(){
-  if(!st){if(MG){MG.cleanup&&MG.cleanup();MG=null}app.innerHTML=`<h1 style="color:#fff;text-shadow:0 3px 0 rgba(0,0,0,.3)">🚢 El Arca a la Deriva</h1><div class="card"><p>Escribe tu nombre y te tocará un animal al azar.</p>${sala?`<p class="mut">Sala: <b>${esc(sala)}</b></p>`:`<input id="sl" maxlength="4" placeholder="Código de sala" style="text-transform:uppercase">`}<input id="nm" maxlength="20" placeholder="Tu nombre"><button class="pri" id="go">Entrar</button>${status?`<p style="color:var(--bad)">${esc(status)}</p>`:''}</div>`;
+  if(!st){if(MG){MG.cleanup&&MG.cleanup();MG=null}app.innerHTML=`<h1 style="color:#fff;text-shadow:0 3px 0 rgba(0,0,0,.3)">🚢 A La Deriva</h1><div class="card"><p>Escribe tu nombre y te tocará un animal al azar.</p>${sala?`<p class="mut">Sala: <b>${esc(sala)}</b></p>`:`<input id="sl" maxlength="4" placeholder="Código de sala" style="text-transform:uppercase">`}<input id="nm" maxlength="20" placeholder="Tu nombre"><button class="pri" id="go">Entrar</button>${status?`<p style="color:var(--bad)">${esc(status)}</p>`:''}</div>`;
     document.getElementById('go').onclick=()=>{const sl=document.getElementById('sl');if(sl){sala=sl.value.trim().toUpperCase();token=ls.get('tok_'+sala)}if(!sala)return alert('Escribe el código de sala');status='Conectando…';join(document.getElementById('nm').value);render()};return}
+  if(PRACTICE&&st.stage==='lobby')return;
+  if(PRACTICE){PRACTICE=false}
   if(st.stage==='mini'&&st.mini)return renderMini();
   if(MG){MG.cleanup&&MG.cleanup();MG=null}
   const m=st.me;let h=header();
-  if(st.stage==='lobby'){h+=`<h2 style="color:#fff">Elige tu manada</h2>`+st.groups.map((g,i)=>`<button data-g="${i}" class="${m.gi===i?'sel':''}">${esc(g.name)} <span class="mut">(${g.n})</span></button>`).join('')+`<p class="mut" style="color:#fff">Si no eliges, te asignamos una. Espera a que zarpe el barco.</p>`}
+  if(st.stage==='lobby'){h+=`<h2 style="color:#fff">Elige tu manada</h2>`+st.groups.map((g,i)=>`<button data-g="${i}" class="${m.gi===i?'sel':''}">${esc(g.name)} <span class="mut">(${g.n})</span></button>`).join('')+`<p class="mut" style="color:#fff">Si no eliges, te asignamos una. Espera a que zarpe el barco.</p><button class="pri" id="prac" style="background:#3fa9ff">🧪 Probar microjuegos y giroscopio</button>`}
   else if(st.stage==='intro'){h+=`<div class="card"><h1>${esc(st.phaseName)}</h1><p>${esc(st.desc)}</p></div><p style="color:#fff;font-weight:800">👀 Mira la pantalla grande y escucha al loro…</p>`}
   else if(st.stage==='question'){const q=st.q;
     h+=`<div class="card"><span class="tag">${KIND[q.kind]||''}</span>${q.side?` <span class="chip">Tu bando: ${esc(q.side)}</span>`:''}<h2>${esc(q.text)}</h2><div class="tmr" id="tmr">${q.armed?'':'🦜'}</div></div>`;
     if(q.hinted)h+=`<div class="card" style="background:#ffd35c;font-weight:800">🔎 ¡Usaste tu pista secreta! Te quitamos 2 opciones incorrectas.</div>`;
-    if(!q.can)h+=`<div class="card mut">Estás en el agua 🛟. Espera un rescate o un minijuego para volver a bordo.</div>`;
-    else{if(q.kind==='revive'&&!m.alive)h+=`<p style="color:#fff;font-weight:800">¡Acierta para tener chance de volver!</p>`;
-      h+=q.opts.map((o,i)=>`<button data-a="${i}" class="${q.mine===i?'sel':''} ${q.hide.includes(i)?'gone':''}" ${q.mine!=null||q.hide.includes(i)?'disabled':''}>${esc(o)}</button>`).join('');
+    if(q.dist){const tot=Math.max(1,q.dist.reduce((a,b)=>a+b,0));h+=`<div class="card" style="padding:10px 14px">${q.dist.map((n,i)=>`<div style="display:flex;gap:8px;align-items:center;font-weight:800;margin:3px 0"><span style="width:${q.kind==='trial'?110:22}px">${q.kind==='trial'?esc(q.opts[i]):'ABCD'[i]}</span><div style="flex:1;height:14px;background:#f0dcb4;border-radius:7px;overflow:hidden"><div style="height:100%;width:${n/tot*100}%;background:${['#ff5d8f','#3fa9ff','#ffb627','#7ae582'][i]}"></div></div><span>${n}</span></div>`).join('')}</div>`}
+    if(q.kind==='council')h+=`<div class="card" style="background:#ffd35c;font-weight:800">🗣️ ¡Debatan en voz alta! Puedes cambiar tu voto hasta que termine el tiempo. Cuenta la mayoría del barco.</div>`;
+    if(q.accused)h+=`<div class="card" style="background:#ff8a8a;font-weight:800;font-size:20px">🎤 ¡Te acusan a ti! Defiéndete en voz alta. La tripulación vota si eres culpable.</div>`;
+    else if(!q.can)h+=`<div class="card mut">Estás en el agua 🛟. Espera un rescate o un minijuego para volver a bordo.</div>`;
+    if(q.can){if(q.kind==='revive'&&!m.alive)h+=`<p style="color:#fff;font-weight:800">¡Acierta para tener chance de volver!</p>`;
+      const lockd=q.mine!=null&&q.kind!=='council';h+=q.opts.map((o,i)=>`<button data-a="${i}" class="${q.mine===i?'sel':''} ${q.hide.includes(i)?'gone':''}" ${lockd||q.hide.includes(i)?'disabled':''}>${esc(o)}</button>`).join('');
       if(q.mine!=null)h+=`<p style="color:#fff;font-weight:800">Respuesta enviada ✔</p>`}}
   else if(st.stage==='reveal'){const r=st.result;let you='';
     if(r.correct>=0&&r.opts){you=r.mine==null?'<p class="mut">No respondiste</p>':(r.mine===r.correct?'<h1 style="color:var(--ok)">✅ ¡Correcto!</h1>':'<h1 style="color:var(--bad)">❌ Incorrecto</h1>');you+=`<p>Respuesta: <b>${esc(r.opts[r.correct])}</b></p>`}
     if(r.kind==='mini'&&r.board){const mine=r.board.find(b=>b.name===m.name);you=`<h1>${esc(r.title)}</h1>${mine?`<p>Tu puntaje: <b>${mine.score} ${esc(r.unit)}</b></p>`:''}`}
     h+=`<div class="card">${you}${r.kind==='mini'?'':`<h2>${esc(r.title)}</h2>`}${r.lines.map(l=>`<p>${esc(l)}</p>`).join('')}${r.events.map(l=>`<p><b>${esc(l)}</b></p>`).join('')}</div>`}
   else if(st.stage==='end'){const win=!st.sunk&&st.goal.have>=st.goal.need;
-    h+=`<div class="card" style="text-align:center"><h1>${win?'🎉 ¡Llegamos a puerto!':'🌊 El arca se hundió'}</h1><p>A bordo: ${st.goal.have} (meta: ${st.goal.need})</p><p>Pozo final: ${st.pool}</p></div><div class="card"><b>⭐ Más aciertos aportados</b><ol>${st.mvps.map(r=>`<li>${r.ani||''} ${esc(r.name)} — ${r.hits}</li>`).join('')}</ol></div>`}
+    h+=`<div class="card" style="text-align:center"><h1>${win?'🎉 ¡Llegamos a puerto!':'🌊 El barco se hundió'}</h1><p>A bordo: ${st.goal.have} (meta: ${st.goal.need})</p><p>Pozo final: ${st.pool}</p></div><div class="card"><b>⭐ Más aciertos aportados</b><ol>${st.mvps.map(r=>`<li>${r.ani||''} ${esc(r.name)} — ${r.hits}</li>`).join('')}</ol></div>`}
   if(status)h=`<p style="color:#fff;font-weight:800">${esc(status)}</p>`+h;
   const ak=st.stage+(st.q?st.q.text:'')+(st.result?st.result.title:'');if(ak!==window._ak){window._ak=ak;h='<div class="anim">'+h+'</div>'}
   app.innerHTML=h;
   app.querySelectorAll('[data-g]').forEach(b=>b.onclick=()=>s.emit('group',+b.dataset.g));
+  const pr=document.getElementById('prac');if(pr)pr.onclick=startPractice;
   app.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>{s.emit('answer',+b.dataset.a);buzz(30)});
   tick();
 }
@@ -192,8 +209,8 @@ addEventListener('deviceorientation',e=>{if(e.gamma!=null)SENS.orient=true});
 function mgWario(box,m){
   let i=0,score=0,cleanups=[],sent=false,timers=[];
   const T=(f,ms)=>{const t=setTimeout(f,ms);timers.push(t);return t};
-  const games=(m.games||['tap','stop','avoid','swipe','tap']).map(g=>(g==='shake'&&!SENS.motion)?'tap':(g==='tilt'&&!SENS.orient)?'stop':g);
-  const finish=()=>{if(sent)return;sent=true;send({type:'mini',id:m.id,score,final:true});box.innerHTML=`<div class="card"><h2>¡Terminado! ${score/10} de ${games.length} ✔</h2></div>`};
+  const games=m.practice?m.games:(m.games||['tap','stop','avoid','swipe','tap']).map(g=>(g==='shake'&&!SENS.motion)?'tap':(g==='tilt'&&!SENS.orient)?'stop':g);
+  const finish=()=>{if(sent)return;sent=true;if(!m.practice)send({type:'mini',id:m.id,score,final:true});box.innerHTML=`<div class="card"><h2>¡Terminado! ${score/10} de ${games.length} ✔</h2></div>`};
   const run=()=>{
     cleanups.forEach(f=>f());cleanups=[];
     if(i>=games.length)return finish();
